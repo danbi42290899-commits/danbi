@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      No 'unsafe-inline' in script-src: production build only ever emits
+      external <script src="...">. In `npm run dev`, Vite injects its HMR
+      client as an inline script *before* this tag in the head, so it loads
+      before this CSP is parsed and isn't affected (CSP via <meta> only
+      applies to what follows it in the document). Don't move this tag
+      above Vite's injected scripts, and re-check HMR after a Vite upgrade.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; script-src 'self'"
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Frequency Hearing Test</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

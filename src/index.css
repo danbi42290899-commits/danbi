@@ -1,0 +1,86 @@
+@font-face {
+  font-family: 'HRGothic';
+  src: url('./assets/fonts/HRGothic-Demi.otf') format('opentype');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'HRBookman';
+  src: url('./assets/fonts/HRBookman-Light.otf') format('opentype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'HRMono';
+  src: url('./assets/fonts/HRMono-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  /* JARVIS-style HUD: always black, regardless of system light/dark
+     preference — there is no light variant, matching how the instrument
+     screens below were already always-black. */
+  --bg: #030303;
+  --panel-bg: #0a0a0a;
+  --panel-border: #3a1414;
+  --grid-line: rgba(255, 42, 42, 0.09);
+  --ink: #f0e9e9;
+  --ink-soft: #a08a8a;
+  --accent: #ff2a2a;
+  --accent-contrast: #0a0000;
+  --alert: #ffb020;
+  --alert-contrast: #1a1000;
+  --warning-bg: #1a0808;
+  --warning-border: #ff2a2a;
+  --shadow: rgba(255, 42, 42, 0.18);
+
+  --hud-cyan: #2adfff;
+  --hud-red-dim: #7a1414;
+  --hud-glow: 0 0 10px rgba(255, 42, 42, 0.55);
+
+  /* Instrument screens (scope bezel / digital readouts) stay a fixed
+     near-black, like a real device's dark glass. */
+  --scope-bezel: #030000;
+  --scope-grid: rgba(255, 42, 42, 0.12);
+  --scope-green: #ff3b3b;
+  --spectrum-line: #ff6a3b;
+  --readout-bg: #030000;
+  --readout-fg: #ff5a4d;
+
+  --font-display: 'HRGothic', 'Century Gothic', system-ui, sans-serif;
+  --font-body: 'HRBookman', Georgia, 'Noto Serif', serif;
+  --font-mono: 'HRMono', ui-monospace, 'Courier New', monospace;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    repeating-linear-gradient(to right, var(--grid-line) 0, var(--grid-line) 1px, transparent 1px, transparent 64px),
+    repeating-linear-gradient(to bottom, var(--grid-line) 0, var(--grid-line) 1px, transparent 1px, transparent 64px),
+    var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
