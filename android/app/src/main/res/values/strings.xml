@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Frequency Hearing Test</string>
+    <string name="title_activity_main">Frequency Hearing Test</string>
+    <string name="package_name">com.db.frequencyhearingtest</string>
+    <string name="custom_url_scheme">com.db.frequencyhearingtest</string>
+</resources>
