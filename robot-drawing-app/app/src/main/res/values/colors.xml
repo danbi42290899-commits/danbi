@@ -17,6 +17,7 @@
 
     <color name="accent">#3D5AFE</color>
     <color name="accent_tint">#EEF1FF</color>
+    <color name="danger_text">#B3261E</color>
 
     <color name="button_bg_normal">#FFFFFF</color>
 </resources>

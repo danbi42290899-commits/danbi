@@ -42,6 +42,8 @@ class MainActivity : AppCompatActivity() {
         Color.parseColor("#000000")  // black
     )
 
+    private var currentPenType = PenType.PENCIL
+
     private var pendingSaveFormat: SaveFormat? = null
 
     private enum class SaveFormat { PNG, PDF }
@@ -68,6 +70,7 @@ class MainActivity : AppCompatActivity() {
         drawingView = findViewById(R.id.drawingView)
         btnPen = findViewById(R.id.btnPen)
         btnEraser = findViewById(R.id.btnEraser)
+        val btnClearAll: MaterialButton = findViewById(R.id.btnClearAll)
         val btnUndo: MaterialButton = findViewById(R.id.btnUndo)
         val btnSave: MaterialButton = findViewById(R.id.btnSave)
 
@@ -86,13 +89,18 @@ class MainActivity : AppCompatActivity() {
             findViewById(R.id.colorYellow),
             findViewById(R.id.colorBlack)
         )
-        // Each swatch keeps its own fixed fill color; only the stroke ring moves on selection.
-        colorButtons.forEachIndexed { i, button ->
-            button.backgroundTintList = ColorStateList.valueOf(colorValues[i])
-        }
 
-        btnPen.setOnClickListener { setMode(DrawMode.PEN) }
+        btnPen.setOnClickListener {
+            // Tapping Pen while already in Pen mode reopens the pen-type picker;
+            // switching from Eraser just activates Pen with whatever type was last chosen.
+            if (drawingView.currentMode == DrawMode.PEN) {
+                showPenTypeDialog()
+            } else {
+                setMode(DrawMode.PEN)
+            }
+        }
         btnEraser.setOnClickListener { setMode(DrawMode.ERASER) }
+        btnClearAll.setOnClickListener { drawingView.clearAll() }
         btnUndo.setOnClickListener { drawingView.undo() }
         btnSave.setOnClickListener { showSaveDialog() }
 
@@ -104,45 +112,61 @@ class MainActivity : AppCompatActivity() {
             button.setOnClickListener { selectColor(index) }
         }
 
-        // Defaults: pen mode, size index 1 (8px), black color
+        // Defaults: pen mode, pencil type, size index 1 (8px), black color
+        drawingView.currentPenType = currentPenType
         setMode(DrawMode.PEN)
         selectSize(1)
         selectColor(4)
     }
 
-    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
-
     private fun setMode(mode: DrawMode) {
         drawingView.currentMode = mode
-        applyToggleStyle(btnPen, mode == DrawMode.PEN)
-        applyToggleStyle(btnEraser, mode == DrawMode.ERASER)
+        val whiteColor = ContextCompat.getColor(this, android.R.color.white)
+        val inkColor = ContextCompat.getColor(this, R.color.ink)
+
+        btnPen.setBackgroundResource(if (mode == DrawMode.PEN) R.drawable.bg_metal_selected else R.drawable.bg_metal_normal)
+        btnPen.setTextColor(if (mode == DrawMode.PEN) whiteColor else inkColor)
+
+        btnEraser.setBackgroundResource(if (mode == DrawMode.ERASER) R.drawable.bg_metal_selected else R.drawable.bg_metal_normal)
+        btnEraser.setTextColor(if (mode == DrawMode.ERASER) whiteColor else inkColor)
     }
 
     private fun selectSize(index: Int) {
         drawingView.currentStrokeWidth = sizePx[index]
-        sizeButtons.forEachIndexed { i, button -> applyToggleStyle(button, i == index) }
+        val whiteColor = ColorStateList.valueOf(ContextCompat.getColor(this, android.R.color.white))
+        val inkColor = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ink))
+        sizeButtons.forEachIndexed { i, button ->
+            val selected = i == index
+            button.setBackgroundResource(if (selected) R.drawable.bg_dot_selected else R.drawable.bg_dot_normal)
+            button.iconTint = if (selected) whiteColor else inkColor
+        }
     }
 
     private fun selectColor(index: Int) {
         drawingView.currentColor = colorValues[index]
         colorButtons.forEachIndexed { i, button ->
-            val selected = i == index
-            button.strokeWidth = dp(if (selected) 3 else 1)
-            button.strokeColor = ColorStateList.valueOf(
-                ContextCompat.getColor(this, if (selected) R.color.ink else R.color.border)
-            )
+            button.foreground = if (i == index) ContextCompat.getDrawable(this, R.drawable.bg_swatch_ring) else null
         }
         setMode(DrawMode.PEN)
     }
 
-    private fun applyToggleStyle(button: MaterialButton, selected: Boolean) {
-        val bg = ContextCompat.getColor(this, if (selected) R.color.accent_tint else R.color.button_bg_normal)
-        val stroke = ContextCompat.getColor(this, if (selected) R.color.accent else R.color.border)
-        val text = ContextCompat.getColor(this, if (selected) R.color.accent else R.color.ink)
-        button.backgroundTintList = ColorStateList.valueOf(bg)
-        button.strokeColor = ColorStateList.valueOf(stroke)
-        button.strokeWidth = dp(if (selected) 2 else 1)
-        button.setTextColor(text)
+    private fun showPenTypeDialog() {
+        val labels = arrayOf(
+            getString(R.string.pen_type_pencil),
+            getString(R.string.pen_type_highlighter),
+            getString(R.string.pen_type_fountain)
+        )
+        AlertDialog.Builder(this)
+            .setTitle(R.string.pen_type_dialog_title)
+            .setItems(labels) { _, which ->
+                currentPenType = when (which) {
+                    1 -> PenType.HIGHLIGHTER
+                    2 -> PenType.FOUNTAIN
+                    else -> PenType.PENCIL
+                }
+                drawingView.currentPenType = currentPenType
+            }
+            .show()
     }
 
     private fun showSaveDialog() {

@@ -4,6 +4,7 @@
     <string name="pen">Pen</string>
     <string name="eraser">Eraser</string>
     <string name="undo">Undo</string>
+    <string name="clear_all">Clear</string>
     <string name="save">Save</string>
     <string name="save_dialog_title">Save drawing as…</string>
     <string name="save_as_png">Save as PNG</string>
@@ -12,4 +13,8 @@
     <string name="saved_pdf">Saved as PDF</string>
     <string name="save_failed">Save failed</string>
     <string name="permission_needed">Storage permission is needed to save files</string>
+    <string name="pen_type_dialog_title">Choose pen type</string>
+    <string name="pen_type_pencil">연필 (Pencil)</string>
+    <string name="pen_type_highlighter">형광펜 (Highlighter)</string>
+    <string name="pen_type_fountain">만년필 (Fountain pen)</string>
 </resources>
