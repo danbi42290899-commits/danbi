@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Robot Drawing</string>
+    <string name="pen">Pen</string>
+    <string name="eraser">Eraser</string>
+    <string name="undo">Undo</string>
+    <string name="save">Save</string>
+    <string name="save_dialog_title">Save drawing as…</string>
+    <string name="save_as_png">Save as PNG</string>
+    <string name="save_as_pdf">Save as PDF</string>
+    <string name="saved_png">Saved as PNG</string>
+    <string name="saved_pdf">Saved as PDF</string>
+    <string name="save_failed">Save failed</string>
+    <string name="permission_needed">Storage permission is needed to save files</string>
+</resources>

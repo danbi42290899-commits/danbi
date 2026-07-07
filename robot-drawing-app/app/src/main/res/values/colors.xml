@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="pen_red">#F44336</color>
+    <color name="pen_blue">#2196F3</color>
+    <color name="pen_green">#4CAF50</color>
+    <color name="pen_yellow">#FFEB3B</color>
+    <color name="pen_black">#000000</color>
+
+    <color name="canvas_white">#FFFFFF</color>
+    <color name="toolbar_bg">#E0E0E0</color>
+    <color name="button_normal">#FFFFFF</color>
+    <color name="button_selected">#FFC107</color>
+    <color name="button_border">#9E9E9E</color>
+    <color name="button_border_selected">#000000</color>
+</resources>

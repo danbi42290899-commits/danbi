@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:weightSum="100"
+    android:background="@color/canvas_white">
+
+    <!-- Main row: left toolbar | center canvas | right color/save column -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="85"
+        android:orientation="horizontal"
+        android:weightSum="100">
+
+        <!-- Left toolbar: Pen / Eraser / Undo -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="12"
+            android:orientation="vertical"
+            android:background="@color/toolbar_bg"
+            android:gravity="center"
+            android:padding="8dp">
+
+            <Button
+                android:id="@+id/btnPen"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginBottom="12dp"
+                android:textSize="18sp"
+                android:text="@string/pen" />
+
+            <Button
+                android:id="@+id/btnEraser"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginBottom="12dp"
+                android:textSize="18sp"
+                android:text="@string/eraser" />
+
+            <Button
+                android:id="@+id/btnUndo"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:textSize="18sp"
+                android:text="@string/undo" />
+
+        </LinearLayout>
+
+        <!-- Center canvas -->
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="73"
+            android:background="@color/canvas_white">
+
+            <com.example.robotdrawing.DrawingView
+                android:id="@+id/drawingView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </FrameLayout>
+
+        <!-- Right column: Save + color swatches -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="15"
+            android:orientation="vertical"
+            android:background="@color/toolbar_bg"
+            android:gravity="center"
+            android:padding="8dp">
+
+            <Button
+                android:id="@+id/btnSave"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:layout_marginBottom="16dp"
+                android:textSize="18sp"
+                android:text="@string/save" />
+
+            <View
+                android:id="@+id/colorRed"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_marginBottom="10dp" />
+
+            <View
+                android:id="@+id/colorBlue"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_marginBottom="10dp" />
+
+            <View
+                android:id="@+id/colorGreen"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_marginBottom="10dp" />
+
+            <View
+                android:id="@+id/colorYellow"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_marginBottom="10dp" />
+
+            <View
+                android:id="@+id/colorBlack"
+                android:layout_width="80dp"
+                android:layout_height="80dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Bottom row: pen size 1-5 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="15"
+        android:orientation="horizontal"
+        android:background="@color/toolbar_bg"
+        android:padding="8dp">
+
+        <Button
+            android:id="@+id/btnSize1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:textSize="20sp"
+            android:text="1" />
+
+        <Button
+            android:id="@+id/btnSize2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:textSize="20sp"
+            android:text="2" />
+
+        <Button
+            android:id="@+id/btnSize3"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:textSize="20sp"
+            android:text="3" />
+
+        <Button
+            android:id="@+id/btnSize4"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:textSize="20sp"
+            android:text="4" />
+
+        <Button
+            android:id="@+id/btnSize5"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:textSize="20sp"
+            android:text="5" />
+
+    </LinearLayout>
+
+</LinearLayout>
