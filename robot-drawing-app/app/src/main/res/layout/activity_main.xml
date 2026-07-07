@@ -1,175 +1,320 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:weightSum="100"
-    android:background="@color/canvas_white">
+    android:background="@color/screen_bg">
 
-    <!-- Main row: left toolbar | center canvas | right color/save column -->
-    <LinearLayout
-        android:layout_width="match_parent"
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidelineLeft"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.13" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidelineRight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.87" />
+
+    <!-- Center canvas: fills the full height between the two guidelines -->
+    <com.example.robotdrawing.DrawingView
+        android:id="@+id/drawingView"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="85"
-        android:orientation="horizontal"
-        android:weightSum="100">
+        android:background="@color/canvas_white"
+        android:foreground="@drawable/bg_canvas_frame"
+        app:layout_constraintStart_toStartOf="@id/guidelineLeft"
+        app:layout_constraintEnd_toEndOf="@id/guidelineRight"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp" />
 
-        <!-- Left toolbar: Pen / Eraser / Undo -->
+    <!-- Left panel: Pen / Eraser / Undo -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/leftPanel"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="@color/border"
+        app:cardBackgroundColor="@color/panel_bg"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/guidelineLeft"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp">
+
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="12"
             android:orientation="vertical"
-            android:background="@color/toolbar_bg"
-            android:gravity="center"
-            android:padding="8dp">
+            android:padding="14dp">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnPen"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:layout_marginBottom="12dp"
-                android:textSize="18sp"
-                android:text="@string/pen" />
+                android:layout_marginBottom="14dp"
+                android:text="@string/pen"
+                android:textSize="17sp"
+                android:textAllCaps="false"
+                android:textColor="@color/ink"
+                app:backgroundTint="@color/button_bg_normal"
+                app:strokeColor="@color/border"
+                app:cornerRadius="20dp"
+                app:strokeWidth="1dp" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnEraser"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:layout_marginBottom="12dp"
-                android:textSize="18sp"
-                android:text="@string/eraser" />
+                android:layout_marginBottom="14dp"
+                android:text="@string/eraser"
+                android:textSize="17sp"
+                android:textAllCaps="false"
+                android:textColor="@color/ink"
+                app:backgroundTint="@color/button_bg_normal"
+                app:strokeColor="@color/border"
+                app:cornerRadius="20dp"
+                app:strokeWidth="1dp" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnUndo"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:textSize="18sp"
-                android:text="@string/undo" />
+                android:text="@string/undo"
+                android:textSize="17sp"
+                android:textAllCaps="false"
+                app:backgroundTint="@color/button_bg_normal"
+                app:strokeColor="@color/border"
+                app:strokeWidth="1dp"
+                app:cornerRadius="20dp"
+                android:textColor="@color/ink" />
 
         </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
-        <!-- Center canvas -->
-        <FrameLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="73"
-            android:background="@color/canvas_white">
+    <!-- Right panel: Save + color swatches -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/rightPanel"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="2dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="@color/border"
+        app:cardBackgroundColor="@color/panel_bg"
+        app:layout_constraintStart_toEndOf="@id/guidelineRight"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp">
 
-            <com.example.robotdrawing.DrawingView
-                android:id="@+id/drawingView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-        </FrameLayout>
-
-        <!-- Right column: Save + color swatches -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="15"
             android:orientation="vertical"
-            android:background="@color/toolbar_bg"
-            android:gravity="center"
-            android:padding="8dp">
+            android:padding="14dp">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSave"
                 android:layout_width="match_parent"
-                android:layout_height="80dp"
-                android:layout_marginBottom="16dp"
-                android:textSize="18sp"
-                android:text="@string/save" />
+                android:layout_height="64dp"
+                android:layout_marginBottom="18dp"
+                android:text="@string/save"
+                android:textSize="17sp"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                app:backgroundTint="@color/accent"
+                app:cornerRadius="18dp" />
 
-            <View
-                android:id="@+id/colorRed"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:layout_marginBottom="10dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-            <View
-                android:id="@+id/colorBlue"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:layout_marginBottom="10dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/colorRed"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginBottom="10dp"
+                    app:backgroundTint="@color/pen_red"
+                    app:cornerRadius="16dp"
+                    app:strokeWidth="0dp" />
 
-            <View
-                android:id="@+id/colorGreen"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:layout_marginBottom="10dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/colorBlue"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginBottom="10dp"
+                    app:backgroundTint="@color/pen_blue"
+                    app:cornerRadius="16dp"
+                    app:strokeWidth="0dp" />
 
-            <View
-                android:id="@+id/colorYellow"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:layout_marginBottom="10dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/colorGreen"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginBottom="10dp"
+                    app:backgroundTint="@color/pen_green"
+                    app:cornerRadius="16dp"
+                    app:strokeWidth="0dp" />
 
-            <View
-                android:id="@+id/colorBlack"
-                android:layout_width="80dp"
-                android:layout_height="80dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/colorYellow"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginBottom="10dp"
+                    app:backgroundTint="@color/pen_yellow"
+                    app:cornerRadius="16dp"
+                    app:strokeWidth="0dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/colorBlack"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    app:backgroundTint="@color/pen_black"
+                    app:cornerRadius="16dp"
+                    app:strokeWidth="0dp" />
+
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Floating compact pen-size pill: bottom-left of the canvas -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/sizePanel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="3dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="@color/border"
+        app:cardBackgroundColor="@color/panel_bg"
+        app:layout_constraintStart_toStartOf="@id/guidelineLeft"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="28dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSize1"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="8dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                app:icon="@drawable/dot_1"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconTint="@null"
+                app:backgroundTint="@color/button_bg_normal"
+                app:strokeColor="@color/border"
+                app:cornerRadius="26dp"
+                app:strokeWidth="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSize2"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="8dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                app:icon="@drawable/dot_2"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconTint="@null"
+                app:backgroundTint="@color/button_bg_normal"
+                app:strokeColor="@color/border"
+                app:cornerRadius="26dp"
+                app:strokeWidth="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSize3"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="8dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                app:icon="@drawable/dot_3"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconTint="@null"
+                app:backgroundTint="@color/button_bg_normal"
+                app:strokeColor="@color/border"
+                app:cornerRadius="26dp"
+                app:strokeWidth="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSize4"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="8dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                app:icon="@drawable/dot_4"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconTint="@null"
+                app:backgroundTint="@color/button_bg_normal"
+                app:strokeColor="@color/border"
+                app:cornerRadius="26dp"
+                app:strokeWidth="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSize5"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                app:icon="@drawable/dot_5"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconTint="@null"
+                app:backgroundTint="@color/button_bg_normal"
+                app:strokeColor="@color/border"
+                app:cornerRadius="26dp"
+                app:strokeWidth="1dp" />
 
         </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
-    </LinearLayout>
-
-    <!-- Bottom row: pen size 1-5 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="15"
-        android:orientation="horizontal"
-        android:background="@color/toolbar_bg"
-        android:padding="8dp">
-
-        <Button
-            android:id="@+id/btnSize1"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            android:textSize="20sp"
-            android:text="1" />
-
-        <Button
-            android:id="@+id/btnSize2"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            android:textSize="20sp"
-            android:text="2" />
-
-        <Button
-            android:id="@+id/btnSize3"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            android:textSize="20sp"
-            android:text="3" />
-
-        <Button
-            android:id="@+id/btnSize4"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            android:textSize="20sp"
-            android:text="4" />
-
-        <Button
-            android:id="@+id/btnSize5"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:textSize="20sp"
-            android:text="5" />
-
-    </LinearLayout>
-
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

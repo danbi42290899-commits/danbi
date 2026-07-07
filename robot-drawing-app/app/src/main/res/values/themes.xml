@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.RobotDrawing" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/pen_blue</item>
-        <item name="android:windowBackground">@color/canvas_white</item>
+        <item name="colorPrimary">@color/accent</item>
+        <item name="android:windowBackground">@color/screen_bg</item>
     </style>
 </resources>

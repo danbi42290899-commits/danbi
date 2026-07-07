@@ -3,21 +3,20 @@ package com.example.robotdrawing
 import android.Manifest
 import android.content.ContentValues
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.graphics.pdf.PdfDocument
 import android.media.MediaScannerConnection
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import android.view.View
-import android.widget.Button
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.google.android.material.button.MaterialButton
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -28,13 +27,13 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var drawingView: DrawingView
 
-    private lateinit var btnPen: Button
-    private lateinit var btnEraser: Button
+    private lateinit var btnPen: MaterialButton
+    private lateinit var btnEraser: MaterialButton
 
-    private lateinit var sizeButtons: List<Button>
+    private lateinit var sizeButtons: List<MaterialButton>
     private val sizePx = floatArrayOf(4f, 8f, 12f, 20f, 32f)
 
-    private lateinit var colorViews: List<View>
+    private lateinit var colorButtons: List<MaterialButton>
     private val colorValues = intArrayOf(
         Color.parseColor("#F44336"), // red
         Color.parseColor("#2196F3"), // blue
@@ -69,8 +68,8 @@ class MainActivity : AppCompatActivity() {
         drawingView = findViewById(R.id.drawingView)
         btnPen = findViewById(R.id.btnPen)
         btnEraser = findViewById(R.id.btnEraser)
-        val btnUndo: Button = findViewById(R.id.btnUndo)
-        val btnSave: Button = findViewById(R.id.btnSave)
+        val btnUndo: MaterialButton = findViewById(R.id.btnUndo)
+        val btnSave: MaterialButton = findViewById(R.id.btnSave)
 
         sizeButtons = listOf(
             findViewById(R.id.btnSize1),
@@ -80,13 +79,17 @@ class MainActivity : AppCompatActivity() {
             findViewById(R.id.btnSize5)
         )
 
-        colorViews = listOf(
+        colorButtons = listOf(
             findViewById(R.id.colorRed),
             findViewById(R.id.colorBlue),
             findViewById(R.id.colorGreen),
             findViewById(R.id.colorYellow),
             findViewById(R.id.colorBlack)
         )
+        // Each swatch keeps its own fixed fill color; only the stroke ring moves on selection.
+        colorButtons.forEachIndexed { i, button ->
+            button.backgroundTintList = ColorStateList.valueOf(colorValues[i])
+        }
 
         btnPen.setOnClickListener { setMode(DrawMode.PEN) }
         btnEraser.setOnClickListener { setMode(DrawMode.ERASER) }
@@ -97,8 +100,8 @@ class MainActivity : AppCompatActivity() {
             button.setOnClickListener { selectSize(index) }
         }
 
-        colorViews.forEachIndexed { index, view ->
-            view.setOnClickListener { selectColor(index) }
+        colorButtons.forEachIndexed { index, button ->
+            button.setOnClickListener { selectColor(index) }
         }
 
         // Defaults: pen mode, size index 1 (8px), black color
@@ -107,40 +110,39 @@ class MainActivity : AppCompatActivity() {
         selectColor(4)
     }
 
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
     private fun setMode(mode: DrawMode) {
         drawingView.currentMode = mode
-        val selectedColor = ContextCompat.getColor(this, R.color.button_selected)
-        val normalColor = ContextCompat.getColor(this, R.color.button_normal)
-        btnPen.setBackgroundColor(if (mode == DrawMode.PEN) selectedColor else normalColor)
-        btnEraser.setBackgroundColor(if (mode == DrawMode.ERASER) selectedColor else normalColor)
+        applyToggleStyle(btnPen, mode == DrawMode.PEN)
+        applyToggleStyle(btnEraser, mode == DrawMode.ERASER)
     }
 
     private fun selectSize(index: Int) {
         drawingView.currentStrokeWidth = sizePx[index]
-        val selectedColor = ContextCompat.getColor(this, R.color.button_selected)
-        val normalColor = ContextCompat.getColor(this, R.color.button_normal)
-        sizeButtons.forEachIndexed { i, button ->
-            button.setBackgroundColor(if (i == index) selectedColor else normalColor)
-        }
+        sizeButtons.forEachIndexed { i, button -> applyToggleStyle(button, i == index) }
     }
 
     private fun selectColor(index: Int) {
         drawingView.currentColor = colorValues[index]
-        colorViews.forEachIndexed { i, view ->
-            view.background = swatchDrawable(colorValues[i], i == index)
+        colorButtons.forEachIndexed { i, button ->
+            val selected = i == index
+            button.strokeWidth = dp(if (selected) 3 else 1)
+            button.strokeColor = ColorStateList.valueOf(
+                ContextCompat.getColor(this, if (selected) R.color.ink else R.color.border)
+            )
         }
         setMode(DrawMode.PEN)
     }
 
-    private fun swatchDrawable(fillColor: Int, selected: Boolean): GradientDrawable {
-        return GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(fillColor)
-            setStroke(
-                if (selected) 10 else 3,
-                if (selected) Color.BLACK else Color.GRAY
-            )
-        }
+    private fun applyToggleStyle(button: MaterialButton, selected: Boolean) {
+        val bg = ContextCompat.getColor(this, if (selected) R.color.accent_tint else R.color.button_bg_normal)
+        val stroke = ContextCompat.getColor(this, if (selected) R.color.accent else R.color.border)
+        val text = ContextCompat.getColor(this, if (selected) R.color.accent else R.color.ink)
+        button.backgroundTintList = ColorStateList.valueOf(bg)
+        button.strokeColor = ColorStateList.valueOf(stroke)
+        button.strokeWidth = dp(if (selected) 2 else 1)
+        button.setTextColor(text)
     }
 
     private fun showSaveDialog() {
