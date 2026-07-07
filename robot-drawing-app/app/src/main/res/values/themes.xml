@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.RobotDrawing" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.RobotDrawing" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/accent</item>
         <item name="android:windowBackground">@color/screen_bg</item>
     </style>
