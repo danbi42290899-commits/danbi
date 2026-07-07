@@ -104,8 +104,21 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:layout_marginBottom="18dp"
                 android:text="@string/undo"
                 android:textSize="16sp"
+                android:textAllCaps="false"
+                android:textColor="@color/ink"
+                android:background="@drawable/bg_metal_normal"
+                app:backgroundTint="@null" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRecord"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="@string/record"
+                android:textSize="15sp"
                 android:textAllCaps="false"
                 android:textColor="@color/ink"
                 android:background="@drawable/bg_metal_normal"

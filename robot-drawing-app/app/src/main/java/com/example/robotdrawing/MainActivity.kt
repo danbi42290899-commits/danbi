@@ -44,9 +44,13 @@ class MainActivity : AppCompatActivity() {
 
     private var currentPenType = PenType.PENCIL
 
+    private lateinit var btnRecord: MaterialButton
+    private lateinit var videoRecorder: DrawingVideoRecorder
+    private var lastRecordedVideo: File? = null
+
     private var pendingSaveFormat: SaveFormat? = null
 
-    private enum class SaveFormat { PNG, PDF }
+    private enum class SaveFormat { PNG, PDF, VIDEO }
 
     private val requestStoragePermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -55,6 +59,7 @@ class MainActivity : AppCompatActivity() {
             when (pendingSaveFormat) {
                 SaveFormat.PNG -> savePng()
                 SaveFormat.PDF -> savePdf()
+                SaveFormat.VIDEO -> saveVideo()
                 null -> {}
             }
         } else {
@@ -73,6 +78,8 @@ class MainActivity : AppCompatActivity() {
         val btnClearAll: MaterialButton = findViewById(R.id.btnClearAll)
         val btnUndo: MaterialButton = findViewById(R.id.btnUndo)
         val btnSave: MaterialButton = findViewById(R.id.btnSave)
+        btnRecord = findViewById(R.id.btnRecord)
+        videoRecorder = DrawingVideoRecorder(drawingView)
 
         sizeButtons = listOf(
             findViewById(R.id.btnSize1),
@@ -103,6 +110,7 @@ class MainActivity : AppCompatActivity() {
         btnClearAll.setOnClickListener { drawingView.clearAll() }
         btnUndo.setOnClickListener { drawingView.undo() }
         btnSave.setOnClickListener { showSaveDialog() }
+        btnRecord.setOnClickListener { toggleRecording() }
 
         sizeButtons.forEachIndexed { index, button ->
             button.setOnClickListener { selectSize(index) }
@@ -169,7 +177,44 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun toggleRecording() {
+        if (videoRecorder.isRecording) {
+            val finished = videoRecorder.stop()
+            lastRecordedVideo = finished
+            btnRecord.setBackgroundResource(R.drawable.bg_metal_normal)
+            btnRecord.setTextColor(ContextCompat.getColor(this, R.color.ink))
+            btnRecord.text = getString(R.string.record)
+            if (finished == null) {
+                Toast.makeText(this, R.string.recording_failed, Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            val tempFile = File(cacheDir, "recording_${timestamp()}.mp4")
+            val started = videoRecorder.start(tempFile)
+            if (started) {
+                btnRecord.setBackgroundResource(R.drawable.bg_metal_recording)
+                btnRecord.setTextColor(ContextCompat.getColor(this, android.R.color.white))
+                btnRecord.text = getString(R.string.stop_recording)
+                Toast.makeText(this, R.string.recording_started, Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, R.string.recording_failed, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     private fun showSaveDialog() {
+        val options = arrayOf(getString(R.string.save_video), getString(R.string.save_image))
+        AlertDialog.Builder(this)
+            .setTitle(R.string.save_dialog_title)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> saveWithPermissionCheck(SaveFormat.VIDEO)
+                    1 -> showImageFormatDialog()
+                }
+            }
+            .show()
+    }
+
+    private fun showImageFormatDialog() {
         val options = arrayOf(getString(R.string.save_as_png), getString(R.string.save_as_pdf))
         AlertDialog.Builder(this)
             .setTitle(R.string.save_dialog_title)
@@ -183,6 +228,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveWithPermissionCheck(format: SaveFormat) {
+        if (format == SaveFormat.VIDEO && (videoRecorder.isRecording || lastRecordedVideo == null)) {
+            Toast.makeText(this, R.string.no_recording_yet, Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val needsPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
             PackageManager.PERMISSION_GRANTED
@@ -196,6 +246,7 @@ class MainActivity : AppCompatActivity() {
         when (format) {
             SaveFormat.PNG -> savePng()
             SaveFormat.PDF -> savePdf()
+            SaveFormat.VIDEO -> saveVideo()
         }
     }
 
@@ -276,5 +327,52 @@ class MainActivity : AppCompatActivity() {
         } finally {
             document.close()
         }
+    }
+
+    private fun saveVideo() {
+        val source = lastRecordedVideo
+        if (source == null || !source.exists()) {
+            Toast.makeText(this, R.string.no_recording_yet, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val filename = "robot_drawing_${timestamp()}.mp4"
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val values = ContentValues().apply {
+                    put(MediaStore.Video.Media.DISPLAY_NAME, filename)
+                    put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+                    put(
+                        MediaStore.Video.Media.RELATIVE_PATH,
+                        Environment.DIRECTORY_MOVIES + "/RobotDrawing"
+                    )
+                }
+                val uri = contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
+                    ?: throw IllegalStateException("MediaStore insert failed")
+                contentResolver.openOutputStream(uri)?.use { out ->
+                    source.inputStream().use { it.copyTo(out) }
+                }
+            } else {
+                val dir = File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
+                    "RobotDrawing"
+                )
+                if (!dir.exists()) dir.mkdirs()
+                val file = File(dir, filename)
+                source.inputStream().use { input ->
+                    FileOutputStream(file).use { out -> input.copyTo(out) }
+                }
+                MediaScannerConnection.scanFile(this, arrayOf(file.absolutePath), arrayOf("video/mp4"), null)
+            }
+            Toast.makeText(this, R.string.saved_video, Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, R.string.save_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onDestroy() {
+        if (videoRecorder.isRecording) {
+            videoRecorder.stop()
+        }
+        super.onDestroy()
     }
 }
