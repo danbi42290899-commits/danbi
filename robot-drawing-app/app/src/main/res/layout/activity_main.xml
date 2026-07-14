@@ -152,17 +152,49 @@
             android:orientation="vertical"
             android:padding="8dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSave"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="68dp"
                 android:layout_marginBottom="20dp"
-                android:text="@string/save"
-                android:textSize="16sp"
-                android:textAllCaps="false"
-                android:textColor="@android:color/white"
-                android:background="@drawable/bg_metal_selected"
-                app:backgroundTint="@null" />
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSaveImage"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:contentDescription="@string/save_image"
+                    android:background="@drawable/bg_metal_selected"
+                    app:backgroundTint="@null"
+                    app:icon="@drawable/ic_image"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="28dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSaveVideo"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:contentDescription="@string/save_video"
+                    android:background="@drawable/bg_metal_selected"
+                    app:backgroundTint="@null"
+                    app:icon="@drawable/ic_video"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconSize="28dp" />
+
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"

@@ -5,7 +5,6 @@ import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
-import android.graphics.pdf.PdfDocument
 import android.media.MediaScannerConnection
 import android.os.Build
 import android.os.Bundle
@@ -50,7 +49,7 @@ class MainActivity : AppCompatActivity() {
 
     private var pendingSaveFormat: SaveFormat? = null
 
-    private enum class SaveFormat { PNG, PDF, VIDEO }
+    private enum class SaveFormat { PNG, VIDEO }
 
     private val requestStoragePermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -58,7 +57,6 @@ class MainActivity : AppCompatActivity() {
         if (granted) {
             when (pendingSaveFormat) {
                 SaveFormat.PNG -> savePng()
-                SaveFormat.PDF -> savePdf()
                 SaveFormat.VIDEO -> saveVideo()
                 null -> {}
             }
@@ -77,7 +75,8 @@ class MainActivity : AppCompatActivity() {
         btnEraser = findViewById(R.id.btnEraser)
         val btnClearAll: MaterialButton = findViewById(R.id.btnClearAll)
         val btnUndo: MaterialButton = findViewById(R.id.btnUndo)
-        val btnSave: MaterialButton = findViewById(R.id.btnSave)
+        val btnSaveImage: MaterialButton = findViewById(R.id.btnSaveImage)
+        val btnSaveVideo: MaterialButton = findViewById(R.id.btnSaveVideo)
         btnRecord = findViewById(R.id.btnRecord)
         videoRecorder = DrawingVideoRecorder(drawingView)
 
@@ -109,7 +108,8 @@ class MainActivity : AppCompatActivity() {
         btnEraser.setOnClickListener { setMode(DrawMode.ERASER) }
         btnClearAll.setOnClickListener { drawingView.clearAll() }
         btnUndo.setOnClickListener { drawingView.undo() }
-        btnSave.setOnClickListener { showSaveDialog() }
+        btnSaveImage.setOnClickListener { saveWithPermissionCheck(SaveFormat.PNG) }
+        btnSaveVideo.setOnClickListener { saveWithPermissionCheck(SaveFormat.VIDEO) }
         btnRecord.setOnClickListener { toggleRecording() }
 
         sizeButtons.forEachIndexed { index, button ->
@@ -201,32 +201,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showSaveDialog() {
-        val options = arrayOf(getString(R.string.save_video), getString(R.string.save_image))
-        AlertDialog.Builder(this)
-            .setTitle(R.string.save_dialog_title)
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> saveWithPermissionCheck(SaveFormat.VIDEO)
-                    1 -> showImageFormatDialog()
-                }
-            }
-            .show()
-    }
-
-    private fun showImageFormatDialog() {
-        val options = arrayOf(getString(R.string.save_as_png), getString(R.string.save_as_pdf))
-        AlertDialog.Builder(this)
-            .setTitle(R.string.save_dialog_title)
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> saveWithPermissionCheck(SaveFormat.PNG)
-                    1 -> saveWithPermissionCheck(SaveFormat.PDF)
-                }
-            }
-            .show()
-    }
-
     private fun saveWithPermissionCheck(format: SaveFormat) {
         if (format == SaveFormat.VIDEO && (videoRecorder.isRecording || lastRecordedVideo == null)) {
             Toast.makeText(this, R.string.no_recording_yet, Toast.LENGTH_SHORT).show()
@@ -245,7 +219,6 @@ class MainActivity : AppCompatActivity() {
 
         when (format) {
             SaveFormat.PNG -> savePng()
-            SaveFormat.PDF -> savePdf()
             SaveFormat.VIDEO -> saveVideo()
         }
     }
@@ -286,46 +259,6 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, R.string.saved_png, Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Toast.makeText(this, R.string.save_failed, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun savePdf() {
-        val bitmap = drawingView.exportBitmap()
-        val filename = "robot_drawing_${timestamp()}.pdf"
-        val document = PdfDocument()
-        try {
-            val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, 1).create()
-            val page = document.startPage(pageInfo)
-            page.canvas.drawBitmap(bitmap, 0f, 0f, null)
-            document.finishPage(page)
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val values = ContentValues().apply {
-                    put(MediaStore.Files.FileColumns.DISPLAY_NAME, filename)
-                    put(MediaStore.Files.FileColumns.MIME_TYPE, "application/pdf")
-                    put(
-                        MediaStore.Files.FileColumns.RELATIVE_PATH,
-                        Environment.DIRECTORY_DOCUMENTS + "/RobotDrawing"
-                    )
-                }
-                val uri = contentResolver.insert(MediaStore.Files.getContentUri("external"), values)
-                    ?: throw IllegalStateException("MediaStore insert failed")
-                contentResolver.openOutputStream(uri)?.use { out -> document.writeTo(out) }
-            } else {
-                val dir = File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-                    "RobotDrawing"
-                )
-                if (!dir.exists()) dir.mkdirs()
-                val file = File(dir, filename)
-                FileOutputStream(file).use { out -> document.writeTo(out) }
-                MediaScannerConnection.scanFile(this, arrayOf(file.absolutePath), arrayOf("application/pdf"), null)
-            }
-            Toast.makeText(this, R.string.saved_pdf, Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            Toast.makeText(this, R.string.save_failed, Toast.LENGTH_SHORT).show()
-        } finally {
-            document.close()
         }
     }
 

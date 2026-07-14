@@ -7,14 +7,9 @@
     <string name="clear_all">Clear</string>
     <string name="record">● Record</string>
     <string name="stop_recording">■ Stop</string>
-    <string name="save">Save</string>
-    <string name="save_dialog_title">Save drawing as…</string>
     <string name="save_video">Video Save</string>
     <string name="save_image">Image Save</string>
-    <string name="save_as_png">Save as PNG</string>
-    <string name="save_as_pdf">Save as PDF</string>
     <string name="saved_png">Saved as PNG</string>
-    <string name="saved_pdf">Saved as PDF</string>
     <string name="saved_video">Saved as MP4</string>
     <string name="save_failed">Save failed</string>
     <string name="no_recording_yet">No recorded video yet</string>
