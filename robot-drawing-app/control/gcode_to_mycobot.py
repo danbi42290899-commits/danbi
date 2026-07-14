@@ -1,0 +1,70 @@
+# import library
+import time
+from pymycobot.mycobot280 import MyCobot280  # import mycobot library,if don't have, first 'pip install pymycobot'
+
+# use PC and M5 control
+mc = MyCobot280('COM5', 115200)  # WINDOWS use ，need check port number when you PC
+# mc = MyCobot('/dev/ttyUSB0',115200)           # VM linux use
+time.sleep(0.5)
+
+# Set interpolation mode
+mc.set_fresh_mode(0)
+time.sleep(0.5)
+# Send the initial point angle of the robot arm, the speed is 50,
+# it can be customized and modified, as long as the end is facing down
+mc.send_angles([3, 5.3, -96.8, 8, -1.2, -69.7], 50)
+# Wait 2 seconds for the robot arm to move to the specified angle
+time.sleep(2)
+# Get the current coordinates of the robot arm
+get_coords = mc.get_coords()
+time.sleep(1)
+# Save the parsed coordinates
+data_coords = []
+# Set the drawing speed to 100, and the speed range is 0~100
+draw_speed = 70
+
+
+def process_gcode(file_path):
+    """
+    Parse the contents of the gcode file, extract the XYZ coordinate values, and save the coordinate data into a list
+    :param file_path: Gcode file path
+    :return: A coordinate list
+    """
+    # The last valid coordinate, using the rx, ry, rz values
+    # in the current coordinates of the robot arm as the starting attitude
+    last_coords = [0.0, 0.0, 0.0, get_coords[3], get_coords[4], get_coords[5]]
+    with open(file_path, 'r') as file:
+        # Line-by-line processing instructions
+        for line in file:
+            command = line.strip()  # Remove newline characters and other whitespace characters at the end of the line
+            if command.startswith("G0") or command.startswith("G1"):  # Move command
+                coords = last_coords[:]  # Copy the previous valid coordinates
+                command_parts = command.split()
+                for part in command_parts[1:]:
+                    if part.startswith("X") or part.startswith("x"):
+                        coords[0] = float(part[1:])  # Extract and transform X coordinate data
+                    elif part.startswith("Y") or part.startswith("y"):
+                        coords[1] = float(part[1:])  # Extract and transform Y coordinate data
+                    elif part.startswith("Z") or part.startswith("z"):
+                        coords[2] = float(part[1:])  # Extract and transform Z coordinate data
+                if coords[0] == 0.0 and coords[1] == 0.0:  # If XY data is missing, use the last valid XY coordinates
+                    coords[0] = last_coords[0]
+                    coords[1] = last_coords[1]
+                if coords[2] == 0.0:  # If Z data is missing, use the last valid Z coordinate
+                    coords[2] = last_coords[2]
+                last_coords = coords
+                data_coords.append(coords)  # Add coordinates to list and save
+    return data_coords
+
+
+type = int(input('Please input 1-6（1-square 2-triangle 3-star 4-circle 5-smile 6-quit）:'))
+if type == 1:
+    # Pass in the gcode file path and obtain the coordinate data
+    # File path can be customized
+    coords_data = process_gcode('square.nc')
+    # Send coordinates to the robot arm one by one
+    for i in coords_data:
+        mc.send_coords(i, draw_speed, 1)  # Send coordinates to the robot arm
+        time.sleep(1)  # Wait 1 second for the robot arm movement to complete
+elif type == 2:
+    coords_data = process_gcode('triangle.nc')
