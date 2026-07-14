@@ -83,7 +83,7 @@ class DrawingVideoRecorder(private val drawingView: DrawingView) {
 
     private fun pushFrame(surface: Surface) {
         try {
-            val bitmap = drawingView.exportBitmap()
+            val bitmap = drawingView.exportBitmap(includeActiveStroke = true)
             val canvas = surface.lockCanvas(null)
             canvas.drawColor(Color.WHITE)
             canvas.drawBitmap(bitmap, 0f, 0f, null)

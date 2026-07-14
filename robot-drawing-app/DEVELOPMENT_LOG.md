@@ -94,6 +94,7 @@ Galaxy Tab S 시리즈(S6~S9).
 | 버튼 색상이 전부 파랗게 깨짐 (v1.2.0) | `MaterialButton`의 기본 스타일이 테마 `colorPrimary` 기반 `app:backgroundTint`를 커스텀 `android:background` 위에 자동으로 덧씌움 | 커스텀 배경을 쓰는 모든 버튼에 `app:backgroundTint="@null"` 명시 |
 | 검은색 버튼이 안 보임 (v1.2.1) | 태블릿이 시스템 다크 모드일 때 Android의 force-dark가 흰 패널을 강제로 어둡게 바꿔서, 이미 어두운 검은 원과 색 구분이 안 됨 | 테마를 `DayNight`→고정 `Light`로 변경 + `android:forceDarkAllowed="false"` |
 | 검은색 버튼이 패널 아래로 잘림 (v1.3.1) | `SquareButton`(원형 강제용 커스텀 View)이 `heightMeasureSpec`을 무시하고 무조건 width와 같은 height를 강제 → 실제 남은 세로 공간보다 커지면 패널 밖으로 밀려나 클리핑됨 | `onMeasure`에서 `min(measuredWidth, measuredHeight)`로 제한 + 스와치 컨테이너를 `wrap_content`→weight 기반 높이로 변경(그래야 실제 height 제약이 전달됨) |
+| 녹화한 영상에 그리는 과정이 안 보이고 획이 끝난 순간 결과만 나타남 (v1.4.1) | `DrawingVideoRecorder`가 100ms마다 `DrawingView.exportBitmap()`으로 프레임을 캡처하는데, `exportBitmap()`은 완성된 `strokes`만 그리고 그리는 중인 `activeStroke`는 그리지 않음(정지 이미지 저장용으로는 의도된 동작) — 그래서 손을 떼기 전까지는 매 프레임이 빈 캔버스였음 | `exportBitmap(includeActiveStroke: Boolean = false)`로 파라미터 추가, 비디오 레코더의 `pushFrame()`만 `includeActiveStroke = true`로 호출해서 진행 중인 획도 매 프레임에 포함되게 함. 이미지 저장(`savePng()`)은 기존처럼 완성된 획만 저장(기본값 false) |
 
 **교훈**: `SquareButton`을 쓰는 곳은 항상 weight 기반 높이 안에 넣어야 클리핑 방지 로직이
 작동함. 커스텀 `android:background`를 쓰는 `MaterialButton`엔 항상 `app:backgroundTint="@null"`을
@@ -123,9 +124,10 @@ Galaxy Tab S 시리즈(S6~S9).
 | `v1.3.0-robot-drawing-recording` | 화면 녹화 + Save 메뉴 Video/Image 분리 |
 | `v1.3.1-robot-drawing-swatchfix` | 검은색 버튼 클리핑(잘림) 문제 수정 |
 | `v1.4.0-robot-drawing-savebuttons` | Save 버튼을 이미지/비디오 저장 아이콘 버튼 2개로 분리, PDF 저장 제거 |
+| `v1.4.1-robot-drawing-recordfix` | 화면 녹화 시 그리는 중인 획도 프레임에 포함되도록 수정 (전엔 완성된 획만 녹화되어 매 획이 끝나는 순간 결과만 나타났음) |
 
 최신 다운로드 링크:
-`https://github.com/danbi42290899-commits/danbi/releases/download/v1.4.0-robot-drawing-savebuttons/app-debug.apk`
+`https://github.com/danbi42290899-commits/danbi/releases/download/v1.4.1-robot-drawing-recordfix/app-debug.apk`
 
 ## 9. 아직 안 한 것 / 나중에 고려할 것 (원래 스펙의 "있으면 좋은 기능" 중 미구현)
 

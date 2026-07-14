@@ -164,12 +164,15 @@ class DrawingView @JvmOverloads constructor(
         invalidate()
     }
 
-    fun exportBitmap(): Bitmap {
+    fun exportBitmap(includeActiveStroke: Boolean = false): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         canvas.drawColor(Color.WHITE)
         for (stroke in strokes) {
             drawStroke(canvas, stroke)
+        }
+        if (includeActiveStroke) {
+            activeStroke?.let { drawStroke(canvas, it) }
         }
         return bitmap
     }
