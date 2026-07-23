@@ -238,7 +238,7 @@ updatePhaseDisplay();
         app.ui.efObjNA      = addParamField(ctrl, 3, 3, 'Objective NA', app.params.objNA, []);
         app.ui.efPixelSize  = addParamField(ctrl, 3, 4, 'Pixel size (um)', app.params.pixelSize_um, []);
 
-        app.ui.efDeltaN = addParamField(ctrl, 4, 1, 'Delta n (optional)', NaN, []);
+        app.ui.efDeltaN = addParamField(ctrl, 4, 1, 'Delta n (0 = not set)', 0, []);
         btnLoadTF = uibutton(ctrl, 'Text', 'Load Transfer Functions...', 'ButtonPushedFcn', @btnLoadTransferFn_Callback);
         btnLoadTF.Layout.Row = 4; btnLoadTF.Layout.Column = [3 4];
         btnRecompute = uibutton(ctrl, 'Text', 'Recompute Phase', 'ButtonPushedFcn', @btnReconstruct_Callback);
@@ -406,10 +406,14 @@ updatePhaseDisplay();
         statusLbls = gobjects(1,4);
         for k = 1:4
             l = uilabel(g, 'Text', titles{k}); l.Layout.Row = k; l.Layout.Column = 1;
-            b = uibutton(g, 'Text', 'Browse...', 'ButtonPushedFcn', @(src,ev) loadOneDirection(dirs{k}, statusLbls(k)));
-            b.Layout.Row = k; b.Layout.Column = 2;
+            % Create the status label BEFORE the button: the button's callback
+            % closure captures statusLbls(k) by value at creation time, so the
+            % real label handle must already exist in the array first (otherwise
+            % the closure captures an empty gobjects() placeholder).
             statusLbls(k) = uilabel(g, 'Text', '(not loaded)');
             statusLbls(k).Layout.Row = k; statusLbls(k).Layout.Column = 3;
+            b = uibutton(g, 'Text', 'Browse...', 'ButtonPushedFcn', @(src,ev) loadOneDirection(dirs{k}, statusLbls(k)));
+            b.Layout.Row = k; b.Layout.Column = 2;
         end
         btnDone = uibutton(g, 'Text', 'Done', 'ButtonPushedFcn', @(~,~) close(dlg));
         btnDone.Layout.Row = 5; btnDone.Layout.Column = [1 3];
@@ -541,7 +545,7 @@ updatePhaseDisplay();
         app.data.phaseInfo = info.description;
         app.data.opd = calculateOPD(phase, app.params.wavelength_um);
         deltaN = app.ui.efDeltaN.Value;
-        if ~isnan(deltaN) && deltaN ~= 0
+        if deltaN ~= 0
             app.data.thickness = calculateThickness(phase, app.params.wavelength_um, deltaN);
         else
             app.data.thickness = [];
@@ -732,7 +736,7 @@ updatePhaseDisplay();
         ph = app.data.phase(row, col);
         opdVal = calculateOPD(ph, app.params.wavelength_um);
         deltaN = app.ui.efDeltaN.Value;
-        if ~isnan(deltaN) && deltaN ~= 0
+        if deltaN ~= 0
             thickVal = calculateThickness(ph, app.params.wavelength_um, deltaN);
             thickStr = sprintf('%.4f um', thickVal);
         else
@@ -793,8 +797,7 @@ updatePhaseDisplay();
             roi.mask(idx) = true;
         end
 
-        deltaN = app.ui.efDeltaN.Value;
-        if isnan(deltaN); deltaN = 0; end
+        deltaN = app.ui.efDeltaN.Value; % 0 means "not set" (see efDeltaN default)
         stats = analyzePhaseROI(app.data.phase, app.data.opd, app.data.thickness, roi.mask, deltaN);
         roi.stats = stats;
 
