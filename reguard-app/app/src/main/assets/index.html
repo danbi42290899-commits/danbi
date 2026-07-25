@@ -1,0 +1,1387 @@
+<title>Re:Guard — Interactive Prototype</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+:root{
+  --bg:#FFFFFF; --bg2:#F6F9FC; --card:#FFFFFF;
+  --primary:#2878D0; --primary-ink:#FFFFFF; --navy:#173A5E;
+  --mint:#4CC9B0; --indigo:#6E7FDB;
+  --safe:#32B78D; --safe-tint:#E4F6EF;
+  --warning:#F2A93B; --warning-tint:#FDF1DF;
+  --danger:#E65F5C; --danger-tint:#FCE7E6;
+  --border:#DDE6EE; --text:#183247; --text2:#718396; --text3:#9AACBB;
+  --shadow: 0 8px 24px rgba(23,58,94,0.08);
+  --r-lg:24px; --r-md:18px; --r-sm:14px; --r-pill:999px;
+}
+:root[data-theme="dark"]{
+  --bg:#0E1922; --bg2:#152331; --card:#182633;
+  --primary:#5FA1EA; --primary-ink:#0E1922; --navy:#BFD8F2;
+  --mint:#5FE0C4; --indigo:#9AA4F2;
+  --safe:#3FD19E; --safe-tint:#123227;
+  --warning:#F5B65C; --warning-tint:#332711;
+  --danger:#F0817D; --danger-tint:#391D1D;
+  --border:#28394A; --text:#EAF1F7; --text2:#93A6B5; --text3:#6C7F8F;
+  --shadow: 0 8px 28px rgba(0,0,0,0.4);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1922; --bg2:#152331; --card:#182633;
+    --primary:#5FA1EA; --primary-ink:#0E1922; --navy:#BFD8F2;
+    --mint:#5FE0C4; --indigo:#9AA4F2;
+    --safe:#3FD19E; --safe-tint:#123227;
+    --warning:#F5B65C; --warning-tint:#332711;
+    --danger:#F0817D; --danger-tint:#391D1D;
+    --border:#28394A; --text:#EAF1F7; --text2:#93A6B5; --text3:#6C7F8F;
+    --shadow: 0 8px 28px rgba(0,0,0,0.4);
+  }
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  min-height:100vh; background:var(--bg2);
+  font-family:"Roboto","Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  color:var(--text);
+  display:flex; align-items:flex-start; justify-content:center;
+  padding:28px 16px 60px;
+}
+.tabular{font-variant-numeric:tabular-nums;}
+button{font-family:inherit;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:6px;}
+
+/* ---------- lab chrome (outside the phone) ---------- */
+.lab{width:100%;max-width:1180px;display:flex;gap:28px;align-items:flex-start;justify-content:center;flex-wrap:wrap;}
+.lab-side{width:280px;flex:0 0 280px;padding-top:10px;}
+.lab-title{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);font-weight:700;margin:0 0 6px;}
+.lab-name{font-size:26px;font-weight:800;color:var(--navy);margin:0 0 4px;letter-spacing:-0.01em;}
+.lab-desc{font-size:13.5px;line-height:1.6;color:var(--text2);margin:0 0 20px;}
+.lab-block{background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:16px 18px;margin-bottom:14px;}
+.lab-block h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);font-weight:700;}
+.lab-block p, .lab-block li{font-size:13px;line-height:1.55;color:var(--text);margin:0;}
+.lab-block ul{margin:0;padding-left:18px;}
+.themeToggle{display:flex;gap:8px;margin-bottom:20px;}
+.themeToggle button{flex:1;padding:9px 0;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--card);color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer;}
+.themeToggle button.active{background:var(--navy);color:var(--bg);border-color:var(--navy);}
+.swatchRow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.swatch{width:26px;height:26px;border-radius:8px;border:1px solid var(--border);}
+
+/* ---------- phone frame ---------- */
+.phone-wrap{position:relative;}
+.phone{
+  width:390px; height:844px; background:var(--navy); border-radius:46px;
+  padding:14px; box-shadow: var(--shadow), 0 0 0 1px rgba(23,58,94,0.15);
+  position:relative;
+}
+.phone-screen{
+  position:relative; width:100%; height:100%; background:var(--bg);
+  border-radius:32px; overflow:hidden; display:flex; flex-direction:column;
+}
+.statusbar{
+  height:38px; flex:0 0 38px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 26px; font-size:13px; font-weight:700; color:var(--text); background:var(--bg); z-index:5;
+}
+.statusbar .dot-cluster{display:flex;gap:5px;align-items:center;}
+.notch{
+  position:absolute; top:14px; left:50%; transform:translateX(-50%);
+  width:120px; height:24px; background:var(--navy); border-radius:14px; z-index:20;
+}
+.app-body{flex:1; position:relative; overflow:hidden; background:var(--bg);}
+.screen{
+  position:absolute; inset:0; overflow-y:auto; display:none; flex-direction:column;
+  animation: fadeIn .22s ease;
+}
+.screen.active{display:flex;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+@media (prefers-reduced-motion: reduce){ .screen{animation:none;} }
+
+.appbar{
+  padding:18px 20px 8px; flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.appbar h1{font-size:19px; margin:0; font-weight:800; color:var(--navy); letter-spacing:-0.01em;}
+.appbar .back{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:16px;}
+.scroll-pad{padding:0 20px 24px; flex:1; overflow-y:auto;}
+.scroll-pad::-webkit-scrollbar{display:none;}
+
+/* ---------- bottom nav ---------- */
+.bottomnav{
+  flex:0 0 66px; display:flex; border-top:1px solid var(--border); background:var(--card);
+}
+.bottomnav button{
+  flex:1; border:none; background:none; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; color:var(--text3); font-size:11px; font-weight:600; cursor:pointer; padding:0;
+}
+.bottomnav button .ic{font-size:19px; line-height:1;}
+.bottomnav button.active{color:var(--primary);}
+
+/* ---------- generic ---------- */
+.card{background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg); padding:18px 20px;}
+.card.sm{border-radius:var(--r-md); padding:16px 18px;}
+.stack{display:flex; flex-direction:column; gap:14px;}
+.row{display:flex; align-items:center;}
+.row.between{justify-content:space-between;}
+.row.gap8{gap:8px;} .row.gap10{gap:10px;} .row.gap12{gap:12px;}
+.section-header{display:flex; align-items:baseline; justify-content:space-between; margin:22px 0 12px;}
+.section-header h2{font-size:15px; margin:0; font-weight:800; color:var(--navy); letter-spacing:0.01em;}
+.section-header .link{font-size:12.5px; color:var(--primary); font-weight:700; cursor:pointer; background:none; border:none; padding:0;}
+.section-header:first-child{margin-top:6px;}
+
+.btn-primary{
+  width:100%; height:54px; border-radius:var(--r-pill); border:none; background:var(--primary); color:var(--primary-ink);
+  font-size:15.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn-primary:active{opacity:.85;}
+.btn-outline{
+  width:100%; height:52px; border-radius:var(--r-pill); border:1.5px solid var(--primary); background:transparent; color:var(--primary);
+  font-size:15px; font-weight:700; cursor:pointer;
+}
+.btn-danger-outline{border-color:var(--danger); color:var(--danger);}
+.btn-text{background:none;border:none;color:var(--text2);font-size:13.5px;font-weight:600;cursor:pointer;padding:6px;}
+
+.chip{display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:var(--r-pill); font-size:12px; font-weight:700; border:1px solid var(--border); background:var(--bg2); color:var(--text);}
+.chip .dot{width:7px;height:7px;border-radius:50%;}
+.chip.connected .dot{background:var(--safe);}
+.chip.disconnected .dot{background:var(--danger);}
+.chip.battery .dot{display:none;}
+
+.pill-status{display:inline-flex; align-items:center; gap:7px; padding:5px 12px 5px 10px; border-radius:var(--r-pill); font-size:12px; font-weight:800; letter-spacing:.02em;}
+.pill-status .dot{width:8px;height:8px;border-radius:50%;}
+.pill-status.safe{background:var(--safe-tint); color:var(--text);} .pill-status.safe .dot{background:var(--safe);}
+.pill-status.warning{background:var(--warning-tint); color:var(--text);} .pill-status.warning .dot{background:var(--warning);}
+.pill-status.danger{background:var(--danger-tint); color:var(--text);} .pill-status.danger .dot{background:var(--danger);}
+.pill-status.neutral{background:var(--bg2); color:var(--text2);} .pill-status.neutral .dot{background:var(--text3);}
+
+input[type=text],input[type=password]{
+  width:100%; height:50px; border-radius:var(--r-md); border:1.5px solid var(--border); background:var(--bg2);
+  padding:0 16px; font-size:14.5px; color:var(--text); outline:none;
+}
+input[type=text]:focus,input[type=password]:focus{border-color:var(--primary); background:var(--bg);}
+label.field-label{font-size:12.5px; font-weight:700; color:var(--text2); margin-bottom:6px; display:block; letter-spacing:.02em;}
+
+.toggle{width:46px;height:27px;border-radius:14px;background:var(--border);position:relative;cursor:pointer;flex:0 0 auto;border:none;padding:0;}
+.toggle .knob{position:absolute; top:3px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:left .15s ease;}
+.toggle.on{background:var(--primary);}
+.toggle.on .knob{left:22px;}
+
+.seg{display:flex; background:var(--bg2); border:1px solid var(--border); border-radius:var(--r-pill); padding:3px; gap:3px;}
+.seg button{flex:1; border:none; background:none; padding:8px 4px; border-radius:var(--r-pill); font-size:12.5px; font-weight:700; color:var(--text2); cursor:pointer;}
+.seg button.active{background:var(--primary); color:#fff;}
+
+.slider-wrap{margin-top:10px;}
+input[type=range]{-webkit-appearance:none; width:100%; height:4px; border-radius:4px; background:var(--border); outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:var(--primary); border:3px solid var(--bg); box-shadow:0 0 0 1px var(--primary); cursor:pointer;}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--primary); border:3px solid var(--bg); box-shadow:0 0 0 1px var(--primary); cursor:pointer;}
+
+.divider{height:1px; background:var(--border); margin:14px 0;}
+
+/* muscle bar */
+.muscle-row{display:flex; flex-direction:column; gap:8px;}
+.muscle-track{position:relative; height:12px; border-radius:8px; background:var(--bg2); border:1px solid var(--border); overflow:visible;}
+.muscle-fill{position:absolute; top:0; left:0; bottom:0; border-radius:8px; transition:width .25s ease, background .25s ease;}
+.muscle-marker{position:absolute; top:-4px; width:2px; height:20px; background:var(--navy); opacity:.55; border-radius:1px;}
+
+/* status hero card */
+.status-hero{border-radius:28px; padding:24px 22px; position:relative; overflow:hidden; border:1.5px solid var(--border); background:var(--card);}
+.status-hero.safe{border-color:var(--safe);}
+.status-hero.warning{border-color:var(--warning);}
+.status-hero.danger{border-color:var(--danger);}
+.status-hero .curve{position:absolute; top:-60px; right:-60px; width:200px; height:200px; border-radius:50%; opacity:.08;}
+.status-hero.safe .curve{background:var(--safe);}
+.status-hero.warning .curve{background:var(--warning);}
+.status-hero.danger .curve{background:var(--danger);}
+.status-icon{width:56px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:26px;}
+.status-icon.safe{background:var(--safe-tint);} .status-icon.warning{background:var(--warning-tint);} .status-icon.danger{background:var(--danger-tint);}
+
+.summary-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.summary-card{background:var(--card); border:1px solid var(--border); border-radius:var(--r-md); padding:16px;}
+.summary-card .val{font-size:20px; font-weight:800; color:var(--navy);}
+.summary-card .lbl{font-size:11.5px; color:var(--text2); font-weight:600; margin-top:2px;}
+
+.alert-item{display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--border);}
+.alert-item:last-child{border-bottom:none;}
+.alert-item .sev-dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:0 0 auto;}
+.alert-item .body{flex:1;}
+.alert-item .top{font-size:13.5px; font-weight:700; color:var(--text);}
+.alert-item .meta{font-size:12px; color:var(--text2); margin-top:2px;}
+
+.patient-card{background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg); padding:16px 18px; cursor:pointer;}
+.patient-card:active{background:var(--bg2);}
+.avatar{width:42px;height:42px;border-radius:12px;background:var(--bg2); border:1px solid var(--border); display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--navy);font-size:15px;}
+
+/* overlay / alert dialog */
+.overlay{position:absolute; inset:0; background:rgba(15,25,35,0.45); display:none; align-items:center; justify-content:center; padding:26px; z-index:50;}
+.overlay.show{display:flex;}
+.alert-dialog{width:100%; background:var(--card); border-radius:26px; padding:26px 22px 22px; box-shadow:var(--shadow); border:1px solid var(--border); text-align:center;}
+.alert-dialog .badge{width:64px;height:64px;border-radius:20px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:30px;}
+.alert-dialog h3{margin:0 0 8px; font-size:18px; color:var(--navy); font-weight:800;}
+.alert-dialog p{margin:0 0 6px; font-size:13.5px; color:var(--text); line-height:1.55;}
+.alert-dialog .guidance{font-size:12.5px; color:var(--text2); margin-top:8px; margin-bottom:18px; line-height:1.5;}
+
+.toast{position:absolute; left:20px; right:20px; bottom:84px; background:var(--navy); color:var(--bg); padding:13px 16px; border-radius:var(--r-md); font-size:13px; font-weight:600; box-shadow:var(--shadow); display:none; z-index:60; text-align:center;}
+.toast.show{display:block; animation:fadeIn .2s ease;}
+
+/* login / role selection */
+.role-card{border:1.5px solid var(--border); border-radius:var(--r-lg); padding:20px; display:flex; gap:14px; align-items:center; cursor:pointer; background:var(--card);}
+.role-card:active{border-color:var(--primary);}
+.role-card .ric{width:50px;height:50px;border-radius:16px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 auto;}
+.role-card h3{margin:0 0 3px; font-size:15.5px; color:var(--navy); font-weight:800;}
+.role-card p{margin:0; font-size:12px; color:var(--text2); line-height:1.4;}
+
+.splash-wrap{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:var(--navy); color:#fff;}
+.splash-logo{width:78px;height:78px;border-radius:24px;background:rgba(255,255,255,0.12); display:flex;align-items:center;justify-content:center;font-size:34px;}
+.splash-wrap h1{font-size:22px; margin:0; font-weight:800; letter-spacing:.01em;}
+.splash-wrap p{font-size:12.5px; margin:0; opacity:.75; text-align:center; max-width:230px; line-height:1.5;}
+
+/* search */
+.search-bar{display:flex; align-items:center; gap:8px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--r-pill); padding:10px 16px;}
+.search-bar input{border:none; background:none; flex:1; font-size:14px; outline:none; color:var(--text);}
+
+/* charts */
+.chart-wrap{width:100%;}
+.chart-legend{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:8px;}
+.chart-legend .li{display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; color:var(--text2);}
+.chart-legend .li .sw{width:9px;height:9px;border-radius:3px;}
+.table-toggle{font-size:11.5px; color:var(--primary); font-weight:700; background:none; border:none; cursor:pointer; padding:0; margin-top:6px;}
+.mini-table{width:100%; border-collapse:collapse; font-size:11.5px; margin-top:8px;}
+.mini-table th,.mini-table td{padding:6px 4px; text-align:left; border-bottom:1px solid var(--border); color:var(--text2);}
+.mini-table th{color:var(--text); font-weight:700;}
+.mini-table td.num{font-variant-numeric:tabular-nums; color:var(--text);}
+
+.view-toggle-row{display:flex; justify-content:flex-end; margin-bottom:10px;}
+
+.settings-value{font-size:13px; font-weight:800; color:var(--primary);}
+
+/* channel stat grid (replaces concatenated inline text) */
+.chan-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px;}
+.chan-stats.detailed{grid-template-columns:repeat(5,1fr);}
+.cstat{display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 4px; background:var(--bg2); border-radius:10px;}
+.cstat .v{font-size:12.5px; font-weight:800; color:var(--text); font-variant-numeric:tabular-nums;}
+.cstat .l{font-size:9px; color:var(--text2); font-weight:700; text-transform:uppercase; letter-spacing:.02em; text-align:center;}
+
+/* alert sensitivity preset cards */
+.preset-card{border:1.5px solid var(--border); border-radius:var(--r-lg); padding:16px 18px; cursor:pointer; background:var(--card); transition:background .15s ease, border-color .15s ease;}
+.preset-card:active{opacity:.9;}
+.preset-card .pc-title{font-size:14.5px; font-weight:800; color:var(--navy);}
+.preset-card .pc-sub{font-size:12px; color:var(--text2); margin-top:3px; line-height:1.4;}
+.preset-card.selected{background:var(--primary); border-color:var(--primary);}
+.preset-card.selected .pc-title, .preset-card.selected .pc-sub{color:var(--primary-ink);}
+
+.advanced-toggle{background:none; border:none; padding:12px 2px; display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:700; color:var(--primary); cursor:pointer; width:100%;}
+.advanced-toggle .chev{font-size:11px; transition:transform .15s ease;}
+.advanced-toggle.open .chev{transform:rotate(90deg);}
+
+.electrode-guide{display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); font-size:12.5px; color:var(--text2); line-height:1.6;}
+.electrode-guide.show{display:block;}
+
+::placeholder{color:var(--text3);}
+
+/* installed-app overrides: fill the real device screen instead of showing
+   the desktop "phone mockup inside a browser" chrome */
+body{padding:0; display:block; align-items:initial; justify-content:initial;}
+.lab{max-width:none; gap:0; justify-content:stretch;}
+.phone-wrap{width:100%;}
+.phone{width:100%; height:100vh; height:100dvh; border-radius:0; padding:0; box-shadow:none;}
+.phone-screen{border-radius:0;}
+.notch{display:none;}
+</style>
+
+<div class="lab">
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-screen" id="phoneScreen">
+        <div class="statusbar">
+          <span id="clock">9:41</span>
+          <div class="dot-cluster"><span>●●●</span><span>Wi-Fi</span><span id="battTop">100%</span></div>
+        </div>
+        <div class="app-body" id="appBody">
+
+          <!-- 1. SPLASH -->
+          <section class="screen active" data-screen="splash">
+            <div class="splash-wrap">
+              <div class="splash-logo">🦶</div>
+              <h1>Re:Guard</h1>
+              <p>Rehabilitation monitoring for smart ankle braces</p>
+              <div style="margin-top:26px; width:160px;">
+                <button class="btn-outline" style="border-color:rgba(255,255,255,.5); color:#fff; height:44px;" onclick="go('role')">Continue</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. ROLE SELECTION -->
+          <section class="screen" data-screen="role">
+            <div class="appbar"><h1>Welcome</h1><div></div></div>
+            <div class="scroll-pad">
+              <p style="color:var(--text2); font-size:13.5px; margin:0 0 20px;">Select how you'd like to use Re:Guard.</p>
+              <div class="stack">
+                <div class="role-card" onclick="selectRole('patient')">
+                  <div class="ric">🧑</div>
+                  <div><h3>Continue as Patient</h3><p>View your current status and safety alerts</p></div>
+                </div>
+                <div class="role-card" onclick="selectRole('clinician')">
+                  <div class="ric">🩺</div>
+                  <div><h3>Continue as Clinician</h3><p>Manage patient activity records and alert settings</p></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 3. LOGIN -->
+          <section class="screen" data-screen="login">
+            <div class="appbar">
+              <button class="back" onclick="go('role')">←</button>
+              <h1 id="loginTitle">Patient Login</h1>
+              <div style="width:34px;"></div>
+            </div>
+            <div class="scroll-pad">
+              <div class="stack" style="margin-top:8px;">
+                <div>
+                  <label class="field-label">Name</label>
+                  <input type="text" id="loginName" placeholder="Enter your name" />
+                </div>
+                <div>
+                  <label class="field-label">Password</label>
+                  <input type="password" id="loginPass" placeholder="Enter your password" />
+                </div>
+                <button class="btn-primary" style="margin-top:8px;" onclick="doLogin()">Continue</button>
+                <button class="btn-outline" onclick="doDemo()">Try Demo</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 4. PATIENT HOME -->
+          <section class="screen" data-screen="patientHome">
+            <div class="scroll-pad" style="padding-top:18px;">
+              <div style="margin-bottom:16px;">
+                <div style="font-size:13px; color:var(--text2); font-weight:600;">Good afternoon,</div>
+                <div style="font-size:21px; font-weight:800; color:var(--navy);">Emily</div>
+              </div>
+              <div class="row gap8" style="margin-bottom:18px; flex-wrap:wrap;">
+                <span class="chip connected" id="braceChip"><span class="dot"></span>Brace Connected</span>
+                <span class="chip battery">🔋 <span id="battChip">82%</span></span>
+              </div>
+
+              <div class="status-hero safe" id="statusHero">
+                <div class="curve"></div>
+                <div class="row gap12" style="position:relative;">
+                  <div class="status-icon safe" id="statusIcon">🦶</div>
+                  <div>
+                    <div style="font-size:11.5px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.04em;">Current Status</div>
+                    <div style="font-size:18px; font-weight:800; color:var(--navy);" id="statusTitle">Safe</div>
+                  </div>
+                </div>
+                <p style="position:relative; font-size:13.5px; color:var(--text); margin:14px 0 0; line-height:1.55;" id="statusMsg">Your ankle activity is within the safe range.</p>
+              </div>
+
+              <div class="section-header" style="margin-top:22px;"><h2>Muscle Activity</h2></div>
+              <div class="stack" id="muscleChannels"></div>
+
+              <div class="section-header"><h2>Today's Summary</h2></div>
+              <div class="summary-grid">
+                <div class="summary-card"><div class="val tabular" id="sumWear">6h 42m</div><div class="lbl">Wear Time</div></div>
+                <div class="summary-card"><div class="val tabular" id="sumWarn">3</div><div class="lbl">Warning Alerts</div></div>
+                <div class="summary-card"><div class="val tabular" id="sumDanger">1</div><div class="lbl">Danger Alerts</div></div>
+                <div class="summary-card"><div class="val" id="sumChannel" style="font-size:14px;">Lat. Gastrocnemius</div><div class="lbl">Most Active Channel</div></div>
+              </div>
+
+              <div class="section-header"><h2>Clinician Instructions</h2></div>
+              <div class="card sm">
+                <ul style="margin:0; padding-left:18px; font-size:13px; color:var(--text); line-height:1.9;">
+                  <li>Avoid pushing your toes downward.</li>
+                  <li>Do not keep your ankle tense for a long period.</li>
+                </ul>
+              </div>
+              <div style="height:10px;"></div>
+            </div>
+            <div class="bottomnav" id="patientNav"></div>
+          </section>
+
+          <!-- 5. PATIENT HISTORY -->
+          <section class="screen" data-screen="patientHistory">
+            <div class="appbar"><h1>History</h1><div style="width:34px;"></div></div>
+            <div class="scroll-pad">
+              <div class="seg" style="margin-bottom:18px;">
+                <button id="histTabToday" class="active" onclick="setHistRange('today')">Today</button>
+                <button id="histTabWeek" onclick="setHistRange('week')">This Week</button>
+              </div>
+
+              <div class="summary-grid">
+                <div class="summary-card"><div class="val tabular" id="histWear">6h 42m</div><div class="lbl">Wear Time</div></div>
+                <div class="summary-card"><div class="val tabular" id="histWarn">3</div><div class="lbl">Warning Count</div></div>
+                <div class="summary-card"><div class="val tabular" id="histDanger">1</div><div class="lbl">Danger Count</div></div>
+                <div class="summary-card"><div class="val" id="histChannel" style="font-size:13.5px;">Lat. Gastrocnemius</div><div class="lbl">Most Frequent Muscle</div></div>
+              </div>
+
+              <div class="section-header"><h2 id="trendTitle">Daily Alert Trend</h2></div>
+              <div class="card sm">
+                <div class="chart-wrap" id="trendChart"></div>
+              </div>
+
+              <div class="section-header"><h2>Recent Alerts</h2></div>
+              <div class="card sm" id="historyAlertList"></div>
+              <div style="height:10px;"></div>
+            </div>
+            <div class="bottomnav" id="patientNav2"></div>
+          </section>
+
+          <!-- 6. PATIENT PROFILE -->
+          <section class="screen" data-screen="patientProfile">
+            <div class="appbar"><h1>Profile</h1><div style="width:34px;"></div></div>
+            <div class="scroll-pad">
+              <div class="card sm stack" style="gap:12px;">
+                <div class="row gap12">
+                  <div class="avatar" style="width:52px;height:52px;font-size:18px;">EC</div>
+                  <div><div style="font-size:16.5px; font-weight:800; color:var(--navy);">Emily Carter</div><div style="font-size:12px; color:var(--text2);">Patient</div></div>
+                </div>
+              </div>
+
+              <div class="section-header"><h2>Injury Details</h2></div>
+              <div class="card sm stack" style="gap:12px;">
+                <div class="row between"><span style="font-size:13px; color:var(--text2);">Injury Area</span><span style="font-size:13px; font-weight:700;">Right Ankle</span></div>
+                <div class="divider" style="margin:0;"></div>
+                <div class="row between"><span style="font-size:13px; color:var(--text2);">Diagnosis</span><span style="font-size:13px; font-weight:700;">Grade II Ankle Sprain</span></div>
+                <div class="divider" style="margin:0;"></div>
+                <div class="row between"><span style="font-size:13px; color:var(--text2);">Brace Start Date</span><span style="font-size:13px; font-weight:700;">Jul 10, 2026</span></div>
+                <div class="divider" style="margin:0;"></div>
+                <div class="row between"><span style="font-size:13px; color:var(--text2);">Assigned Clinician</span><span style="font-size:13px; font-weight:700;">Dr. Sarah Kim</span></div>
+              </div>
+
+              <div class="section-header"><h2>Device</h2></div>
+              <div class="card sm stack" style="gap:12px;">
+                <div class="row between">
+                  <span style="font-size:13px; color:var(--text2);">Brace Connection</span>
+                  <span class="chip connected"><span class="dot"></span>Connected</span>
+                </div>
+                <div class="divider" style="margin:0;"></div>
+                <div class="row between">
+                  <span style="font-size:13px; color:var(--text2);">Battery Level</span>
+                  <span style="font-size:13px; font-weight:700;">82%</span>
+                </div>
+                <div class="divider" style="margin:0;"></div>
+                <div class="row between">
+                  <span style="font-size:13px; color:var(--text2);">Vibration Alerts</span>
+                  <button class="toggle on" id="vibToggle" onclick="this.classList.toggle('on')"><span class="knob"></span></button>
+                </div>
+              </div>
+
+              <div class="section-header"><h2>Electrode Placement Guide</h2></div>
+              <div class="card sm">
+                <div class="row between" style="cursor:pointer;" onclick="document.getElementById('elecGuide').classList.toggle('show')">
+                  <span style="font-size:13px; font-weight:700;">How to position the sensors</span>
+                  <span style="color:var(--primary); font-weight:800;">＋</span>
+                </div>
+                <div class="electrode-guide" id="elecGuide">
+                  1. Clean the skin before placing each electrode.<br/>
+                  2. EMG 1 — place over the Tibialis Anterior, front of the shin.<br/>
+                  3. EMG 2 — place over the Lateral Gastrocnemius, outer calf.<br/>
+                  4. EMG 3 — place over the Fibularis Longus, outer lower leg.<br/>
+                  5. Secure the brace and confirm all channels show good signal quality.
+                </div>
+              </div>
+
+              <div style="height:22px;"></div>
+              <button class="btn-outline btn-danger-outline" onclick="logout()">Log Out</button>
+              <div style="height:10px;"></div>
+            </div>
+            <div class="bottomnav" id="patientNav3"></div>
+          </section>
+
+          <!-- 7. CLINICIAN DASHBOARD -->
+          <section class="screen" data-screen="clinicianDashboard">
+            <div class="scroll-pad" style="padding-top:18px;">
+              <div style="margin-bottom:18px;">
+                <div style="font-size:13px; color:var(--text2); font-weight:600;">Welcome back,</div>
+                <div style="font-size:19px; font-weight:800; color:var(--navy);">Dr. Sarah Kim</div>
+              </div>
+
+              <div class="summary-grid" style="margin-bottom:20px;">
+                <div class="summary-card"><div class="val tabular">5</div><div class="lbl">Total Patients</div></div>
+                <div class="summary-card"><div class="val tabular" style="color:var(--warning);">2</div><div class="lbl">Needing Attention</div></div>
+                <div class="summary-card"><div class="val tabular" style="color:var(--danger);">1</div><div class="lbl">Disconnected Devices</div></div>
+                <div class="summary-card"><div class="val tabular" style="color:var(--danger);">4</div><div class="lbl">Danger Alerts Today</div></div>
+              </div>
+
+              <button class="btn-primary" onclick="go('patientList')">View All Patients</button>
+              <div style="height:10px;"></div>
+            </div>
+            <div class="bottomnav" id="clinNav"></div>
+          </section>
+
+          <!-- 8. PATIENT LIST -->
+          <section class="screen" data-screen="patientList">
+            <div class="appbar"><h1>Patients</h1><div style="width:34px;"></div></div>
+            <div class="scroll-pad">
+              <div class="search-bar" style="margin-bottom:14px;">
+                <span>🔍</span>
+                <input type="text" id="patientSearch" placeholder="Search patients" oninput="renderPatientList()" />
+              </div>
+              <div class="seg" style="margin-bottom:16px;">
+                <button class="active" data-f="all" onclick="setPatientFilter('all')">All</button>
+                <button data-f="safe" onclick="setPatientFilter('safe')">Safe</button>
+                <button data-f="warning" onclick="setPatientFilter('warning')">Warning</button>
+                <button data-f="danger" onclick="setPatientFilter('danger')">Danger</button>
+              </div>
+              <div class="stack" id="patientListWrap"></div>
+              <div style="height:10px;"></div>
+            </div>
+            <div class="bottomnav" id="clinNav2"></div>
+          </section>
+
+          <!-- 9. PATIENT DETAIL -->
+          <section class="screen" data-screen="patientDetail">
+            <div class="appbar">
+              <button class="back" onclick="go('patientList')">←</button>
+              <h1 id="detailName">Patient</h1>
+              <div style="width:34px;"></div>
+            </div>
+            <div class="scroll-pad">
+              <div class="card sm stack" style="gap:10px;">
+                <div class="row between"><span style="font-size:12.5px; color:var(--text2);">Injury Area</span><span style="font-size:12.5px; font-weight:700;" id="detailInjury">—</span></div>
+                <div class="row between"><span style="font-size:12.5px; color:var(--text2);">Brace Use Period</span><span style="font-size:12.5px; font-weight:700;" id="detailPeriod">—</span></div>
+                <div class="row between"><span style="font-size:12.5px; color:var(--text2);">Wear Time Today</span><span style="font-size:12.5px; font-weight:700;" id="detailWear">—</span></div>
+                <div class="row between"><span style="font-size:12.5px; color:var(--text2);">Warning / Danger Count</span><span style="font-size:12.5px; font-weight:700;" id="detailCounts">—</span></div>
+              </div>
+
+              <div class="view-toggle-row" style="margin-top:18px;">
+                <div class="seg" style="width:180px;">
+                  <button id="viewSimpleBtn" class="active" onclick="setDetailView('simple')">Simple</button>
+                  <button id="viewDetailedBtn" onclick="setDetailView('detailed')">Detailed</button>
+                </div>
+              </div>
+
+              <div class="section-header" style="margin-top:4px;"><h2>Channel Activation</h2></div>
+              <div class="stack" id="detailChannels"></div>
+
+              <div class="section-header"><h2>RMS Over Time</h2></div>
+              <div class="card sm">
+                <div class="chart-legend" id="rmsLegend"></div>
+                <div class="chart-wrap" id="rmsChart"></div>
+                <button class="table-toggle" onclick="toggleRmsTable()" id="rmsTableBtn">View as table</button>
+                <div id="rmsTableWrap"></div>
+              </div>
+
+              <div id="detailedOnly" style="display:none;">
+                <div class="section-header"><h2>Raw EMG (placeholder)</h2></div>
+                <div class="card sm"><div class="chart-wrap" id="rawChart"></div></div>
+                <div class="section-header"><h2>Filtered EMG (placeholder)</h2></div>
+                <div class="card sm"><div class="chart-wrap" id="filteredChart"></div></div>
+              </div>
+
+              <div class="section-header"><h2>Recent Alerts</h2></div>
+              <div class="card sm" id="detailAlertList"></div>
+
+              <div style="height:16px;"></div>
+              <button class="btn-primary" onclick="goSettingsFor(currentPatientId)">Edit Threshold Settings</button>
+              <div style="height:10px;"></div>
+            </div>
+            <div class="bottomnav" id="clinNav3"></div>
+          </section>
+
+          <!-- 10. CLINICIAN SETTINGS -->
+          <section class="screen" data-screen="clinicianSettings">
+            <div class="appbar"><h1>Settings</h1><div style="width:34px;"></div></div>
+            <div class="scroll-pad">
+              <label class="field-label">Select Patient</label>
+              <select id="settingsPatientSelect" onchange="loadSettingsForm()" style="width:100%; height:50px; border-radius:18px; border:1.5px solid var(--border); background:var(--bg2); padding:0 14px; font-size:14px; color:var(--text); margin-bottom:18px;"></select>
+
+              <div class="section-header" style="margin-top:2px;"><h2>Alert Sensitivity</h2></div>
+              <div class="stack" id="sensitivityPresets" style="gap:10px;"></div>
+
+              <button class="advanced-toggle" id="advancedToggleBtn" onclick="toggleAdvancedSettings()">
+                <span class="chev" id="advancedToggleIcon">▸</span> Advanced Settings
+              </button>
+              <div id="advancedSettings" style="display:none;">
+                <div class="section-header" style="margin-top:6px;"><h2>Per-Channel Thresholds</h2></div>
+                <div class="stack" id="channelThresholds"></div>
+
+                <div class="section-header"><h2>Alert Duration</h2></div>
+                <div class="card sm stack" style="gap:18px;">
+                  <div>
+                    <div class="row between"><span style="font-size:13px; font-weight:700;">Warning Duration</span><span class="settings-value" id="warnDurVal">500 ms</span></div>
+                    <div class="slider-wrap"><input type="range" id="warnDurSlider" min="100" max="2000" step="50" value="500" oninput="onSlider()" /></div>
+                  </div>
+                  <div>
+                    <div class="row between"><span style="font-size:13px; font-weight:700;">Danger Duration</span><span class="settings-value" id="dangerDurVal">1000 ms</span></div>
+                    <div class="slider-wrap"><input type="range" id="dangerDurSlider" min="300" max="4000" step="50" value="1000" oninput="onSlider()" /></div>
+                  </div>
+                  <div>
+                    <div class="row between"><span style="font-size:13px; font-weight:700;">Release Duration</span><span class="settings-value" id="releaseDurVal">300 ms</span></div>
+                    <div class="slider-wrap"><input type="range" id="releaseDurSlider" min="100" max="2000" step="50" value="300" oninput="onSlider()" /></div>
+                  </div>
+                  <p style="font-size:11.5px; color:var(--text2); margin:0; line-height:1.5;">Danger Duration can't go below Warning Duration — it's clamped automatically. Release Duration is how long activity must stay below a threshold before that alert level clears.</p>
+                </div>
+              </div>
+
+              <div class="section-header"><h2>Channel Monitoring</h2></div>
+              <div class="stack" id="channelToggles"></div>
+
+              <div class="section-header"><h2>Multi-Channel Rule</h2></div>
+              <div class="card sm">
+                <div class="row between">
+                  <div>
+                    <div style="font-size:13px; font-weight:700;">Multi-Channel Danger Rule</div>
+                    <div style="font-size:11.5px; color:var(--text2); margin-top:2px;">Trigger Danger when 2+ channels are active at once for ≥ Warning Duration</div>
+                  </div>
+                  <button class="toggle on" id="multiToggle" onclick="this.classList.toggle('on')"><span class="knob"></span></button>
+                </div>
+              </div>
+
+              <div class="section-header"><h2>Patient Warning Message</h2></div>
+              <div class="card sm">
+                <textarea id="customMessage" rows="3" style="width:100%; border:none; background:none; resize:none; font-size:13.5px; color:var(--text); outline:none; font-family:inherit; line-height:1.5;" placeholder="Message shown to the patient during an alert">Stop pointing your foot downward and relax your ankle.</textarea>
+              </div>
+
+              <div style="height:20px;"></div>
+              <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+              <div style="height:10px;"></div>
+            </div>
+            <div class="bottomnav" id="clinNav4"></div>
+          </section>
+
+        </div><!-- /app-body -->
+
+        <!-- ALERT OVERLAY -->
+        <div class="overlay" id="alertOverlay">
+          <div class="alert-dialog">
+            <div class="badge" id="alertBadge">⚠️</div>
+            <h3 id="alertTitle">Attention Needed</h3>
+            <p id="alertMessage">Lateral gastrocnemius activity has continued for 0.8 seconds.</p>
+            <p class="guidance" id="alertGuidance">Stop pointing your foot downward and relax your ankle.</p>
+            <button class="btn-primary" onclick="closeAlert()">I Understand</button>
+          </div>
+        </div>
+
+        <div class="toast" id="toast"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   DATA MODELS (mirrors the Kotlin data classes to be ported)
+   ========================================================= */
+const CHANNEL_DEFS = [
+  {id:'ch1', name:'Tibialis Anterior', short:'EMG 1', description:'Detects ankle dorsiflexion', color:'var(--primary)', hex:'#2878D0'},
+  {id:'ch2', name:'Lateral Gastrocnemius', short:'EMG 2', description:'Detects ankle plantarflexion', color:'var(--mint)', hex:'#4CC9B0'},
+  {id:'ch3', name:'Fibularis Longus', short:'EMG 3', description:'Detects ankle eversion and lateral stabilization', color:'var(--indigo)', hex:'#6E7FDB'},
+];
+
+/* Alert Sensitivity presets: a single click sets the Warning/Danger
+   thresholds (applied to every channel) plus all three alert durations. */
+const ALERT_SENSITIVITY_PRESETS = [
+  {id:'early', label:'Early Alert', subtitle:'Detects lower or shorter muscle activity',
+    warning:45, danger:70, warningDurationMs:300, dangerDurationMs:800, releaseDurationMs:300},
+  {id:'balanced', label:'Balanced', subtitle:'Recommended default setting',
+    warning:60, danger:80, warningDurationMs:500, dangerDurationMs:1200, releaseDurationMs:300},
+  {id:'sustained', label:'Sustained Activity Only', subtitle:'Alerts only for stronger or longer activity',
+    warning:70, danger:90, warningDurationMs:800, dangerDurationMs:1800, releaseDurationMs:300},
+];
+
+/* OFF thresholds sit below their ON counterpart (hysteresis) so a value
+   hovering right at the line doesn't flip the status on/off repeatedly. */
+function computeOffThresholds(warningOn, dangerOn){
+  const warningOff = Math.max(0, Math.round(warningOn * 0.82));
+  let dangerOff = Math.round(dangerOn * 0.85);
+  dangerOff = Math.min(Math.max(dangerOff, warningOn + 1), dangerOn - 1);
+  return {warningOff, dangerOff};
+}
+function makeChannelThreshold(warningOn, dangerOn){
+  const {warningOff, dangerOff} = computeOffThresholds(warningOn, dangerOn);
+  return {warningOn, warningOff, dangerOn, dangerOff, enabled:true};
+}
+
+function makeThresholdSetting(){
+  const p = ALERT_SENSITIVITY_PRESETS.find(x => x.id === 'balanced');
+  return {
+    presetId:'balanced',
+    channels:{
+      ch1: makeChannelThreshold(p.warning, p.danger),
+      ch2: makeChannelThreshold(p.warning, p.danger),
+      ch3: makeChannelThreshold(p.warning, p.danger),
+    },
+    warningDurationMs:p.warningDurationMs,
+    dangerDurationMs:p.dangerDurationMs,
+    releaseDurationMs:p.releaseDurationMs,
+    multiChannelDanger:true,
+    message:'Stop pointing your foot downward and relax your ankle.',
+  };
+}
+
+const Repository = {
+  patients: [
+    {id:'p1', name:'Emily Carter', injuryArea:'Right Ankle', diagnosis:'Grade II Ankle Sprain', braceStart:'Jul 10, 2026', clinician:'Dr. Sarah Kim', connection:'connected', battery:82, status:'safe', wearTime:'6h 42m', warnCount:3, dangerCount:1, mostActive:'Lateral Gastrocnemius'},
+    {id:'p2', name:'Daniel Brooks', injuryArea:'Left Ankle', diagnosis:'Post-Fracture Cast Alternative', braceStart:'Jun 28, 2026', clinician:'Dr. Sarah Kim', connection:'connected', battery:54, status:'warning', wearTime:'5h 10m', warnCount:6, dangerCount:2, mostActive:'Fibularis Longus'},
+    {id:'p3', name:'Olivia Chen', injuryArea:'Right Ankle', diagnosis:'Lateral Ligament Repair (Post-op)', braceStart:'Jul 18, 2026', clinician:'Dr. Sarah Kim', connection:'connected', battery:91, status:'danger', wearTime:'3h 55m', warnCount:9, dangerCount:4, mostActive:'Tibialis Anterior'},
+    {id:'p4', name:'Marcus Lee', injuryArea:'Left Ankle', diagnosis:'Grade I Ankle Sprain', braceStart:'Jul 20, 2026', clinician:'Dr. Sarah Kim', connection:'disconnected', battery:15, status:'warning', wearTime:'1h 20m', warnCount:2, dangerCount:0, mostActive:'Lateral Gastrocnemius'},
+    {id:'p5', name:'Sophia Turner', injuryArea:'Right Ankle', diagnosis:'Achilles Tendon Protection', braceStart:'Jul 5, 2026', clinician:'Dr. Sarah Kim', connection:'connected', battery:67, status:'safe', wearTime:'7h 05m', warnCount:1, dangerCount:0, mostActive:'Lateral Gastrocnemius'},
+  ],
+  alerts: {
+    p1: [
+      {time:'2:32 PM', channel:'Lateral Gastrocnemius', severity:'warning', durationSec:0.8},
+      {time:'11:17 AM', channel:'Multi-muscle Activation', severity:'danger', durationSec:1.6},
+      {time:'9:05 AM', channel:'Tibialis Anterior', severity:'warning', durationSec:0.6},
+    ],
+    p2: [
+      {time:'4:02 PM', channel:'Fibularis Longus', severity:'danger', durationSec:1.7},
+      {time:'1:40 PM', channel:'Fibularis Longus', severity:'warning', durationSec:0.9},
+      {time:'10:12 AM', channel:'Tibialis Anterior', severity:'warning', durationSec:0.5},
+    ],
+    p3: [
+      {time:'3:48 PM', channel:'Multi-muscle Activation', severity:'danger', durationSec:2.1},
+      {time:'2:03 PM', channel:'Tibialis Anterior', severity:'danger', durationSec:1.8},
+      {time:'12:30 PM', channel:'Lateral Gastrocnemius', severity:'warning', durationSec:0.7},
+    ],
+    p4: [
+      {time:'8:55 AM', channel:'Lateral Gastrocnemius', severity:'warning', durationSec:0.6},
+    ],
+    p5: [
+      {time:'9:30 AM', channel:'Lateral Gastrocnemius', severity:'warning', durationSec:0.5},
+    ],
+  },
+  weeklyTrend: [2,4,1,5,3,6,2],
+  weekLabels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+  thresholds: {}, // patientId -> ThresholdSetting
+};
+Repository.patients.forEach(p => Repository.thresholds[p.id] = makeThresholdSetting());
+
+const STATUS_LABEL = {safe:'Safe', warning:'Warning', danger:'Danger'};
+const STATUS_MSG = {
+  safe:'Your ankle activity is within the safe range.',
+  warning:'Restricted muscle activity has been detected.',
+  danger:'Risky muscle activity is continuing. Relax your ankle now.',
+};
+const STATUS_ICON = {safe:'🦶', warning:'⚠️', danger:'⛔'};
+
+function activationLabel(v, ch){
+  if(v >= ch.dangerOn) return 'High';
+  if(v >= ch.warningOn) return 'Moderate';
+  return 'Low';
+}
+
+/* =========================================================
+   EmgAlertEvaluator — status/alert logic, isolated from UI
+   ========================================================= */
+class EmgAlertEvaluator {
+  constructor(settings){
+    this.settings = settings;
+    this.state = {};
+    ['ch1','ch2','ch3'].forEach(id => { this.state[id] = {tier:'low', warningMs:0, dangerMs:0, belowMs:0}; });
+    this.multiMs = 0;
+  }
+  evaluate(sample, dtMs){
+    const s = this.settings;
+    let activeCount = 0;
+    const perChannel = {};
+    ['ch1','ch2','ch3'].forEach(id => {
+      const ch = s.channels[id];
+      const cs = this.state[id];
+      const val = sample[id];
+
+      if(!ch.enabled){
+        cs.tier = 'low'; cs.warningMs = 0; cs.dangerMs = 0; cs.belowMs = 0;
+        perChannel[id] = {value:val, status:'safe', tier:'low', warningMs:0};
+        return;
+      }
+
+      /* three-tier state machine with separate ON/OFF (hysteresis) edges per
+         tier, so noise near a threshold doesn't flip status back and forth.
+         Dropping a tier also needs sustained time below the OFF edge
+         (Release Duration) before it clears, not just a single low sample. */
+      let tier = cs.tier;
+      if(tier === 'low'){
+        cs.belowMs = 0;
+        if(val >= ch.dangerOn) tier = 'high';
+        else if(val >= ch.warningOn) tier = 'medium';
+      } else if(tier === 'medium'){
+        if(val >= ch.dangerOn){ tier = 'high'; cs.belowMs = 0; }
+        else if(val < ch.warningOff){
+          cs.belowMs += dtMs;
+          if(cs.belowMs >= s.releaseDurationMs) tier = 'low';
+        } else {
+          cs.belowMs = 0;
+        }
+      } else if(tier === 'high'){
+        if(val < ch.dangerOff){
+          cs.belowMs += dtMs;
+          if(cs.belowMs >= s.releaseDurationMs) tier = 'medium';
+        } else {
+          cs.belowMs = 0;
+        }
+      }
+      cs.tier = tier;
+      if(tier === 'low'){
+        cs.warningMs = 0; cs.dangerMs = 0;
+      } else {
+        cs.warningMs += dtMs;
+        cs.dangerMs = tier === 'high' ? cs.dangerMs + dtMs : 0;
+        activeCount++;
+      }
+
+      let status = 'safe'; // low activity, or not sustained long enough yet -> ignored
+      if(tier === 'high' && cs.dangerMs >= s.dangerDurationMs) status = 'danger';
+      else if(tier !== 'low' && cs.warningMs >= s.warningDurationMs) status = 'warning';
+      perChannel[id] = {value:val, status, tier, warningMs:cs.warningMs};
+    });
+
+    this.multiMs = activeCount >= 2 ? this.multiMs + dtMs : 0;
+    const multiTriggered = s.multiChannelDanger && activeCount >= 2 && this.multiMs >= s.warningDurationMs;
+
+    let overall = 'safe';
+    let cause = null;
+    Object.keys(perChannel).forEach(id => { if(perChannel[id].status === 'danger') overall = 'danger'; });
+    if(overall !== 'danger' && multiTriggered){
+      overall = 'danger'; cause = 'Multi-muscle Activation';
+    }
+    if(overall === 'safe'){
+      Object.keys(perChannel).forEach(id => { if(perChannel[id].status === 'warning') overall = 'warning'; });
+    }
+    if(!cause && overall !== 'safe'){
+      let worstId = null, worstMs = -1;
+      Object.keys(perChannel).forEach(id => { if(perChannel[id].status !== 'safe' && perChannel[id].warningMs > worstMs){worstMs = perChannel[id].warningMs; worstId = id;} });
+      cause = worstId ? CHANNEL_DEFS.find(c=>c.id===worstId).name : null;
+    }
+    return {overall, perChannel, cause};
+  }
+}
+
+/* =========================================================
+   FakeEmgDataSource — periodic dummy EMG sample generator
+   ========================================================= */
+const FakeEmgDataSource = {
+  base:{ch1:22, ch2:28, ch3:18},
+  next(spike){
+    const s = {};
+    ['ch1','ch2','ch3'].forEach(id => {
+      let v = this.base[id] + (Math.random()*14 - 7);
+      if(spike && spike[id]) v = 70 + Math.random()*28;
+      v = Math.max(2, Math.min(100, v));
+      this.base[id] = this.base[id]*0.6 + v*0.4;
+      s[id] = Math.round(v);
+    });
+    s.quality = {ch1: 88+Math.round(Math.random()*10), ch2: 85+Math.round(Math.random()*12), ch3: 90+Math.round(Math.random()*8)};
+    return s;
+  }
+};
+
+/* =========================================================
+   STATE + NAVIGATION
+   ========================================================= */
+const appState = {
+  role:null, screen:'splash', patientTab:'home', clinicianTab:'dashboard',
+  historyRange:'today', detailView:'simple', patientFilter:'all',
+  currentPatientId:'p1', settingsPatientId:'p1',
+  todayAlertCounts:{warning:3, danger:1},
+};
+let currentPatientId = 'p1';
+const evaluator = new EmgAlertEvaluator(Repository.thresholds['p1']);
+
+function go(screen){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelector('.screen[data-screen="'+screen+'"]').classList.add('active');
+  appState.screen = screen;
+  document.getElementById('appBody').scrollTop = 0;
+  if(screen === 'patientHome') renderPatientHome();
+  if(screen === 'patientHistory') renderHistory();
+  if(screen === 'patientList') renderPatientList();
+  if(screen === 'clinicianSettings') { document.getElementById('settingsPatientSelect').value = appState.settingsPatientId; loadSettingsForm(); }
+  updateBottomNavs();
+}
+
+function selectRole(role){
+  appState.role = role;
+  document.getElementById('loginTitle').textContent = role === 'patient' ? 'Patient Login' : 'Clinician Login';
+  document.getElementById('loginName').value = '';
+  document.getElementById('loginPass').value = '';
+  go('login');
+}
+function doLogin(){ enterApp(); }
+function doDemo(){ if(!appState.role) appState.role = 'patient'; enterApp(); }
+function enterApp(){
+  if(appState.role === 'clinician'){ go('clinicianDashboard'); } else { go('patientHome'); startLiveMonitoring(); }
+}
+function logout(){
+  stopLiveMonitoring();
+  appState.role = null;
+  go('role');
+}
+
+/* bottom navs (rebuilt into every host div so identical everywhere) */
+const PATIENT_NAV = [ {id:'patientHome', ic:'🏠', lbl:'Home'}, {id:'patientHistory', ic:'🕘', lbl:'History'}, {id:'patientProfile', ic:'👤', lbl:'Profile'} ];
+const CLINICIAN_NAV = [ {id:'clinicianDashboard', ic:'📊', lbl:'Dashboard'}, {id:'clinicianSettings', ic:'⚙️', lbl:'Settings'} ];
+function buildNav(hostIds, items){
+  hostIds.forEach(hostId => {
+    const host = document.getElementById(hostId);
+    if(!host) return;
+    host.innerHTML = items.map(it => `<button data-id="${it.id}" onclick="go('${it.id}')"><span class="ic">${it.ic}</span>${it.lbl}</button>`).join('');
+  });
+}
+buildNav(['patientNav','patientNav2','patientNav3'], PATIENT_NAV);
+buildNav(['clinNav','clinNav2','clinNav3','clinNav4'], CLINICIAN_NAV);
+function updateBottomNavs(){
+  document.querySelectorAll('.bottomnav button').forEach(b => b.classList.toggle('active', b.dataset.id === appState.screen));
+}
+
+/* =========================================================
+   SVG CHART HELPERS (hand-rolled smooth line charts)
+   ========================================================= */
+function smoothPath(pts){
+  if(pts.length < 2) return '';
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for(let i=0;i<pts.length-1;i++){
+    const p0 = pts[i-1] || pts[i], p1 = pts[i], p2 = pts[i+1], p3 = pts[i+2] || p2;
+    const c1x = p1.x + (p2.x-p0.x)/6, c1y = p1.y + (p2.y-p0.y)/6;
+    const c2x = p2.x - (p3.x-p1.x)/6, c2y = p2.y - (p3.y-p1.y)/6;
+    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2.x} ${p2.y}`;
+  }
+  return d;
+}
+function scaleY(v, min, max, h, pad){ return pad + (1 - (v-min)/(max-min||1)) * (h-pad*2); }
+
+function renderSingleTrendChart(hostId, values, labels){
+  const w=310, h=140, pad=18;
+  const min=0, max=Math.max(...values)+2;
+  const stepX = (w-pad*2)/(values.length-1);
+  const pts = values.map((v,i)=>({x: pad+i*stepX, y: scaleY(v,min,max,h,pad)}));
+  const line = smoothPath(pts);
+  const area = line + ` L ${pts[pts.length-1].x} ${h-pad} L ${pts[0].x} ${h-pad} Z`;
+  let grid = '';
+  for(let g=0; g<3; g++){ const gy = pad + g*(h-pad*2)/2; grid += `<line x1="${pad}" y1="${gy}" x2="${w-pad}" y2="${gy}" stroke="var(--border)" stroke-width="1"/>`; }
+  const labelsSvg = labels.map((l,i)=>`<text x="${pts[i].x}" y="${h-2}" font-size="9" fill="var(--text3)" text-anchor="middle">${l}</text>`).join('');
+  const todayIdx = labels.length-1;
+  const endDot = `<circle cx="${pts[todayIdx].x}" cy="${pts[todayIdx].y}" r="4.5" fill="var(--primary)" stroke="var(--card)" stroke-width="2"/>`;
+  const endLabel = `<text x="${pts[todayIdx].x}" y="${pts[todayIdx].y-10}" font-size="10.5" font-weight="700" fill="var(--primary)" text-anchor="middle">${values[todayIdx]}</text>`;
+  document.getElementById(hostId).innerHTML = `
+    <svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" role="img" aria-label="Daily alert count trend for the past 7 days">
+      ${grid}
+      <path d="${area}" fill="var(--primary)" opacity="0.08"/>
+      <path d="${line}" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      ${labelsSvg}
+      ${endDot}${endLabel}
+    </svg>`;
+}
+
+function buildRmsSeriesPoints(seed){
+  const pts = [];
+  for(let i=0;i<8;i++){ pts.push(20 + Math.abs(Math.sin(i*0.9+seed)*40) + (i===5?seed*6:0)); }
+  return pts;
+}
+let rmsSeriesData = null, rmsAlertMarkers = null;
+function renderRmsChart(){
+  const w=310, h=160, pad=20;
+  const timeLabels = ['8a','10a','12p','2p','4p','6p','8p','10p'];
+  rmsSeriesData = CHANNEL_DEFS.map((c,ci)=>buildRmsSeriesPoints(ci+1));
+  const s = Repository.thresholds[currentPatientId];
+  const allVals = rmsSeriesData.flat();
+  const min=0, max=Math.max(100, Math.max(...allVals)+10);
+  const stepX = (w-pad*2)/(timeLabels.length-1);
+  let grid = '';
+  for(let g=0; g<3; g++){ const gy = pad + g*(h-pad*2)/2; grid += `<line x1="${pad}" y1="${gy}" x2="${w-pad}" y2="${gy}" stroke="var(--border)" stroke-width="1"/>`; }
+  /* each channel has its own Warning threshold, so draw one dashed line per
+     channel (in that channel's color) instead of a single shared line */
+  const threshLine = CHANNEL_DEFS.map(c => {
+    const y = scaleY(s.channels[c.id].warningOn, min, max, h, pad);
+    return `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="${c.hex}" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>`;
+  }).join('');
+  let paths = '';
+  rmsSeriesData.forEach((series, si) => {
+    const pts = series.map((v,i)=>({x: pad+i*stepX, y: scaleY(v,min,max,h,pad)}));
+    paths += `<path d="${smoothPath(pts)}" fill="none" stroke="${CHANNEL_DEFS[si].hex}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const last = pts[pts.length-1];
+    paths += `<circle cx="${last.x}" cy="${last.y}" r="3.5" fill="${CHANNEL_DEFS[si].hex}" stroke="var(--card)" stroke-width="1.5"/>`;
+  });
+  rmsAlertMarkers = [{i:2, sev:'warning'},{i:5, sev:'danger'}];
+  const markers = rmsAlertMarkers.map(m => {
+    const x = pad + m.i*stepX; const color = m.sev==='danger' ? 'var(--danger)' : 'var(--warning)';
+    return `<line x1="${x}" y1="${pad}" x2="${x}" y2="${h-pad}" stroke="${color}" stroke-width="1.5" stroke-dasharray="2,2" opacity="0.55"/>
+            <circle cx="${x}" cy="${pad-2}" r="3" fill="${color}"/>`;
+  }).join('');
+  const labelsSvg = timeLabels.map((l,i)=>`<text x="${pad+i*stepX}" y="${h-4}" font-size="8.5" fill="var(--text3)" text-anchor="middle">${l}</text>`).join('');
+  document.getElementById('rmsChart').innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" role="img" aria-label="RMS activation over time for three EMG channels with alert markers">${grid}${threshLine}${paths}${markers}${labelsSvg}</svg>`;
+  document.getElementById('rmsLegend').innerHTML = CHANNEL_DEFS.map(c => `<span class="li"><span class="sw" style="background:${c.hex}"></span>${c.short} ${c.name}</span>`).join('');
+}
+function toggleRmsTable(){
+  const wrap = document.getElementById('rmsTableWrap');
+  const btn = document.getElementById('rmsTableBtn');
+  if(wrap.innerHTML){ wrap.innerHTML=''; btn.textContent='View as table'; return; }
+  btn.textContent = 'Hide table';
+  const timeLabels = ['8a','10a','12p','2p','4p','6p','8p','10p'];
+  let rows = timeLabels.map((t,i) => `<tr><td>${t}</td>${rmsSeriesData.map(s=>`<td class="num">${s[i].toFixed(0)}%</td>`).join('')}</tr>`).join('');
+  wrap.innerHTML = `<table class="mini-table"><thead><tr><th>Time</th>${CHANNEL_DEFS.map(c=>`<th>${c.short}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+function renderWavePlaceholder(hostId, color, noisy, label){
+  const w=310, h=90, pad=10; const pts=[];
+  for(let x=0; x<=60; x++){
+    const t = x/60*Math.PI*6;
+    let y = Math.sin(t)*22 + (noisy ? (Math.random()*16-8) : Math.sin(t*3.3)*4);
+    pts.push({x: pad + x*((w-pad*2)/60), y: h/2 + y});
+  }
+  const d = noisy ? ('M '+pts.map(p=>`${p.x} ${p.y}`).join(' L ')) : smoothPath(pts);
+  document.getElementById(hostId).innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" role="img" aria-label="${label} placeholder waveform"><line x1="${pad}" y1="${h/2}" x2="${w-pad}" y2="${h/2}" stroke="var(--border)" stroke-width="1"/><path d="${d}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+}
+
+/* =========================================================
+   RENDER: Patient Home
+   ========================================================= */
+function renderMuscleChannelCard(id, val, ch, quality, status, detailed, activationSec){
+  const def = CHANNEL_DEFS.find(c=>c.id===id);
+  const pct = Math.max(0, Math.min(100, val));
+  const color = status === 'danger' ? 'var(--danger)' : status === 'warning' ? 'var(--warning)' : 'var(--safe)';
+  const stats = [
+    {v: pct+'%', l:'RMS'},
+    {v: ch.warningOn+'%', l:'Warn At'},
+    {v: ch.dangerOn+'%', l:'Danger At'},
+    {v: quality+'%', l:'Signal Quality'},
+  ];
+  if(detailed) stats.push({v: activationSec.toFixed(1)+'s', l:'Active'});
+  return `
+  <div class="card sm">
+    <div class="row between" style="margin-bottom:8px;">
+      <div>
+        <div style="font-size:13.5px; font-weight:800; color:var(--navy);">${def.short} · ${def.name}</div>
+        <div style="font-size:11px; color:var(--text2); margin-top:1px;">${def.description}</div>
+      </div>
+      <span class="pill-status ${status}"><span class="dot"></span>${activationLabel(pct, ch)}</span>
+    </div>
+    <div class="muscle-track">
+      <div class="muscle-fill" style="width:${pct}%; background:${color};"></div>
+      <div class="muscle-marker" style="left:${ch.warningOn}%;" title="Warning threshold"></div>
+      <div class="muscle-marker" style="left:${ch.dangerOn}%; background:var(--danger);" title="Danger threshold"></div>
+    </div>
+    <div class="chan-stats${detailed?' detailed':''}">
+      ${stats.map(s=>`<div class="cstat"><span class="v">${s.v}</span><span class="l">${s.l}</span></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderPatientHome(){
+  const p = Repository.patients.find(x=>x.id==='p1');
+  document.getElementById('battChip').textContent = p.battery + '%';
+  document.getElementById('battTop').textContent = p.battery + '%';
+  document.getElementById('sumWear').textContent = p.wearTime;
+  document.getElementById('sumWarn').textContent = appState.todayAlertCounts.warning;
+  document.getElementById('sumDanger').textContent = appState.todayAlertCounts.danger;
+  document.getElementById('sumChannel').textContent = p.mostActive;
+  updateStatusHero(currentOverallStatus || 'safe');
+  const s = Repository.thresholds['p1'];
+  const html = CHANNEL_DEFS.map(c => renderMuscleChannelCard(c.id, FakeEmgDataSource.base[c.id]|0, s.channels[c.id], 90, 'safe', false)).join('');
+  document.getElementById('muscleChannels').innerHTML = html;
+}
+let currentOverallStatus = 'safe';
+function updateStatusHero(status){
+  currentOverallStatus = status;
+  const hero = document.getElementById('statusHero');
+  hero.className = 'status-hero ' + status;
+  document.getElementById('statusIcon').className = 'status-icon ' + status;
+  document.getElementById('statusIcon').textContent = STATUS_ICON[status];
+  document.getElementById('statusTitle').textContent = STATUS_LABEL[status];
+  document.getElementById('statusMsg').textContent = STATUS_MSG[status];
+}
+
+/* live monitoring loop — starts once the patient is signed in and keeps
+   running for the session, mirroring a brace that is always connected */
+let monitoringTimer = null;
+function startLiveMonitoring(){
+  if(monitoringTimer) return;
+  let tick = 0;
+  monitoringTimer = setInterval(() => {
+    tick++;
+    const spike = tick % 9 === 0 ? {ch2:true} : (tick % 14 === 0 ? {ch1:true, ch3:true} : null);
+    const sample = FakeEmgDataSource.next(spike);
+    const result = evaluator.evaluate(sample, 400);
+    const s = Repository.thresholds['p1'];
+    const html = CHANNEL_DEFS.map(c => renderMuscleChannelCard(c.id, sample[c.id], s.channels[c.id], sample.quality[c.id], result.perChannel[c.id].status, false)).join('');
+    document.getElementById('muscleChannels').innerHTML = html;
+    if(result.overall !== currentOverallStatus) updateStatusHero(result.overall);
+    if(result.overall !== 'safe' && !alertShownForThisEpisode){
+      alertShownForThisEpisode = true;
+      triggerAlert(result.overall, result.cause, evaluator.state);
+    }
+    if(result.overall === 'safe') alertShownForThisEpisode = false;
+  }, 400);
+}
+function stopLiveMonitoring(){
+  clearInterval(monitoringTimer);
+  monitoringTimer = null;
+}
+let alertShownForThisEpisode = false;
+function triggerAlert(severity, cause, chState){
+  const worstId = Object.keys(chState).sort((a,b)=>chState[b].aboveMs-chState[a].aboveMs)[0];
+  const sec = (chState[worstId].aboveMs/1000).toFixed(1);
+  const s = Repository.thresholds['p1'];
+  document.getElementById('alertBadge').style.background = severity==='danger' ? 'var(--danger-tint)' : 'var(--warning-tint)';
+  document.getElementById('alertBadge').textContent = severity==='danger' ? '⛔' : '⚠️';
+  document.getElementById('alertTitle').textContent = severity==='danger' ? 'Danger Detected' : 'Attention Needed';
+  document.getElementById('alertMessage').textContent = `${cause} activity has continued for ${sec} seconds.`;
+  document.getElementById('alertGuidance').textContent = s.message;
+  document.getElementById('alertOverlay').classList.add('show');
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+  Repository.alerts.p1.unshift({time:timeStr, channel:cause, severity, durationSec:parseFloat(sec)});
+  if(severity==='warning') appState.todayAlertCounts.warning++; else appState.todayAlertCounts.danger++;
+  document.getElementById('sumWarn').textContent = appState.todayAlertCounts.warning;
+  document.getElementById('sumDanger').textContent = appState.todayAlertCounts.danger;
+
+  if('Notification' in window){
+    try{
+      if(Notification.permission === 'granted'){ new Notification('Re:Guard · '+ (severity==='danger'?'Danger':'Warning'), {body: document.getElementById('alertMessage').textContent}); }
+      else if(Notification.permission !== 'denied'){ Notification.requestPermission(); }
+    }catch(e){}
+  }
+}
+function closeAlert(){ document.getElementById('alertOverlay').classList.remove('show'); }
+
+/* =========================================================
+   RENDER: Patient History
+   ========================================================= */
+function setHistRange(range){
+  appState.historyRange = range;
+  document.getElementById('histTabToday').classList.toggle('active', range==='today');
+  document.getElementById('histTabWeek').classList.toggle('active', range==='week');
+  renderHistory();
+}
+function renderHistory(){
+  const p = Repository.patients.find(x=>x.id==='p1');
+  const isWeek = appState.historyRange === 'week';
+  document.getElementById('histWear').textContent = isWeek ? '38h 20m' : p.wearTime;
+  document.getElementById('histWarn').textContent = isWeek ? Repository.weeklyTrend.reduce((a,b)=>a+b,0) : appState.todayAlertCounts.warning;
+  document.getElementById('histDanger').textContent = isWeek ? 5 : appState.todayAlertCounts.danger;
+  document.getElementById('histChannel').textContent = p.mostActive;
+  document.getElementById('trendTitle').textContent = isWeek ? 'Weekly Alert Trend' : "Today's Alert Trend";
+  const values = isWeek ? Repository.weeklyTrend : [0,1,0,2,1,3,1,1];
+  const labels = isWeek ? Repository.weekLabels : ['8a','10a','12p','2p','4p','6p','8p','Now'];
+  renderSingleTrendChart('trendChart', values, labels);
+
+  const list = Repository.alerts.p1.slice(0, isWeek ? 8 : 4);
+  document.getElementById('historyAlertList').innerHTML = list.map(a => alertItemHtml(a)).join('') || emptyRow('No alerts recorded yet.');
+}
+function alertItemHtml(a){
+  const color = a.severity==='danger' ? 'var(--danger)' : 'var(--warning)';
+  return `<div class="alert-item"><span class="sev-dot" style="background:${color}"></span>
+    <div class="body"><div class="top">${a.channel}</div><div class="meta">${a.time} · ${STATUS_LABEL[a.severity]} · ${a.durationSec.toFixed(1)} sec</div></div></div>`;
+}
+function emptyRow(text){ return `<div style="padding:14px 0; text-align:center; font-size:12.5px; color:var(--text2);">${text}</div>`; }
+
+/* =========================================================
+   RENDER: Clinician Dashboard / Patient List / Detail
+   ========================================================= */
+function patientCardHtml(p){
+  const conn = p.connection === 'connected';
+  return `<div class="patient-card" onclick="openPatientDetail('${p.id}')">
+    <div class="row between">
+      <div class="row gap12">
+        <div class="avatar">${p.name.split(' ').map(n=>n[0]).join('')}</div>
+        <div>
+          <div style="font-size:14.5px; font-weight:800; color:var(--navy);">${p.name}</div>
+          <div style="font-size:11.5px; color:var(--text2); margin-top:1px;">${p.injuryArea} · ${p.mostActive}</div>
+        </div>
+      </div>
+      <span class="pill-status ${p.status}"><span class="dot"></span>${STATUS_LABEL[p.status]}</span>
+    </div>
+    <div class="row between" style="margin-top:12px;">
+      <span class="chip ${conn?'connected':'disconnected'}"><span class="dot"></span>${conn?'Connected':'Disconnected'}</span>
+      <span style="font-size:12px; font-weight:700; color:var(--primary);">View Details →</span>
+    </div>
+  </div>`;
+}
+function setPatientFilter(f){
+  appState.patientFilter = f;
+  document.querySelectorAll('#patientList .seg button').forEach(b => b.classList.toggle('active', b.dataset.f===f));
+  renderPatientList();
+}
+function renderPatientList(){
+  const q = (document.getElementById('patientSearch').value || '').toLowerCase();
+  let list = Repository.patients.filter(p => p.name.toLowerCase().includes(q));
+  if(appState.patientFilter !== 'all') list = list.filter(p => p.status === appState.patientFilter);
+  document.getElementById('patientListWrap').innerHTML = list.map(p => patientCardHtml(p)).join('') || emptyRow('No patients match your search.');
+}
+function openPatientDetail(id){
+  currentPatientId = id;
+  appState.currentPatientId = id;
+  const p = Repository.patients.find(x=>x.id===id);
+  document.getElementById('detailName').textContent = p.name;
+  document.getElementById('detailInjury').textContent = p.injuryArea + ' — ' + p.diagnosis;
+  document.getElementById('detailPeriod').textContent = 'Since ' + p.braceStart;
+  document.getElementById('detailWear').textContent = p.wearTime;
+  document.getElementById('detailCounts').textContent = p.warnCount + ' warning / ' + p.dangerCount + ' danger';
+  setDetailView('simple');
+  renderDetailChannels();
+  renderRmsChart();
+  document.getElementById('rmsTableWrap').innerHTML='';
+  document.getElementById('rmsTableBtn').textContent='View as table';
+  document.getElementById('detailAlertList').innerHTML = (Repository.alerts[id]||[]).map(alertItemHtml).join('') || emptyRow('No alerts recorded yet.');
+  go('patientDetail');
+}
+function setDetailView(mode){
+  appState.detailView = mode;
+  document.getElementById('viewSimpleBtn').classList.toggle('active', mode==='simple');
+  document.getElementById('viewDetailedBtn').classList.toggle('active', mode==='detailed');
+  document.getElementById('detailedOnly').style.display = mode==='detailed' ? 'block' : 'none';
+  if(mode==='detailed'){
+    renderWavePlaceholder('rawChart', 'var(--primary)', true, 'Raw EMG');
+    renderWavePlaceholder('filteredChart', 'var(--mint)', false, 'Filtered EMG');
+  }
+  renderDetailChannels();
+}
+function renderDetailChannels(){
+  const s = Repository.thresholds[currentPatientId];
+  const detailed = appState.detailView === 'detailed';
+  const html = CHANNEL_DEFS.map((c,i) => {
+    const ch = s.channels[c.id];
+    const val = Math.min(20 + i*22 + (currentPatientId==='p3' ? 30 : 0), 100);
+    const status = val >= ch.dangerOn ? 'danger' : val >= ch.warningOn ? 'warning' : 'safe';
+    return renderMuscleChannelCard(c.id, val, ch, 88+i, status, detailed, 0.3+i*0.4);
+  }).join('');
+  document.getElementById('detailChannels').innerHTML = html;
+}
+function goSettingsFor(id){
+  appState.settingsPatientId = id;
+  go('clinicianSettings');
+}
+
+/* =========================================================
+   RENDER: Clinician Settings
+   ========================================================= */
+(function initSettingsSelect(){
+  const sel = document.getElementById('settingsPatientSelect');
+  sel.innerHTML = Repository.patients.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+})();
+let selectedPreset = 'balanced';
+let pendingChannels = {}; // working copy of s.channels while the form is open
+let pendingDurations = {warningDurationMs:500, dangerDurationMs:1200, releaseDurationMs:300};
+let advancedOpen = false;
+
+function renderPresetCards(current){
+  document.getElementById('sensitivityPresets').innerHTML = ALERT_SENSITIVITY_PRESETS.map(p => `
+    <div class="preset-card${p.id===current?' selected':''}" data-id="${p.id}" onclick="pickPreset('${p.id}')">
+      <div class="pc-title">${p.label}</div>
+      <div class="pc-sub">${p.subtitle}</div>
+    </div>`).join('');
+}
+function pickPreset(id){
+  selectedPreset = id;
+  const preset = ALERT_SENSITIVITY_PRESETS.find(p => p.id === id);
+  CHANNEL_DEFS.forEach(c => { pendingChannels[c.id].warningOn = preset.warning; pendingChannels[c.id].dangerOn = preset.danger; });
+  pendingDurations = {warningDurationMs:preset.warningDurationMs, dangerDurationMs:preset.dangerDurationMs, releaseDurationMs:preset.releaseDurationMs};
+  renderPresetCards(id);
+  renderChannelThresholdsSection();
+  syncDurationSlidersFromPending();
+}
+function toggleAdvancedSettings(){
+  advancedOpen = !advancedOpen;
+  document.getElementById('advancedSettings').style.display = advancedOpen ? 'block' : 'none';
+  document.getElementById('advancedToggleBtn').classList.toggle('open', advancedOpen);
+}
+function renderChannelToggleRow(c, ch){
+  return `
+  <div class="card sm">
+    <div class="row between">
+      <div>
+        <div style="font-size:13px; font-weight:700;">${c.short} · ${c.name}</div>
+        <div style="font-size:11.5px; color:var(--text2); margin-top:2px;">${c.description}</div>
+      </div>
+      <button class="toggle ${ch.enabled?'on':''}" data-ch="${c.id}" onclick="this.classList.toggle('on')"><span class="knob"></span></button>
+    </div>
+  </div>`;
+}
+function renderChannelToggles(){
+  document.getElementById('channelToggles').innerHTML = CHANNEL_DEFS.map(c => renderChannelToggleRow(c, pendingChannels[c.id])).join('');
+}
+function renderChannelThresholdRow(c, ch){
+  return `
+  <div class="card sm">
+    <div style="font-size:13px; font-weight:700;">${c.short} · ${c.name}</div>
+    <div class="row between" style="margin-top:10px;"><span style="font-size:12px; color:var(--text2); font-weight:700;">Warning Threshold</span><span class="settings-value" data-ch="${c.id}" data-kind="warning">${ch.warningOn}%</span></div>
+    <div class="slider-wrap"><input type="range" min="10" max="95" step="1" value="${ch.warningOn}" data-ch="${c.id}" data-kind="warning" oninput="onChannelThreshSlider(this)" /></div>
+    <div class="row between" style="margin-top:4px;"><span style="font-size:12px; color:var(--text2); font-weight:700;">Danger Threshold</span><span class="settings-value" data-ch="${c.id}" data-kind="danger">${ch.dangerOn}%</span></div>
+    <div class="slider-wrap"><input type="range" min="10" max="99" step="1" value="${ch.dangerOn}" data-ch="${c.id}" data-kind="danger" oninput="onChannelThreshSlider(this)" /></div>
+  </div>`;
+}
+function renderChannelThresholdsSection(){
+  document.getElementById('channelThresholds').innerHTML = CHANNEL_DEFS.map(c => renderChannelThresholdRow(c, pendingChannels[c.id])).join('');
+}
+function onChannelThreshSlider(el){
+  const cid = el.dataset.ch, kind = el.dataset.kind;
+  let val = parseInt(el.value);
+  const ch = pendingChannels[cid];
+  if(kind === 'warning'){
+    if(val >= ch.dangerOn) val = ch.dangerOn - 1; // Danger threshold must stay above Warning
+    ch.warningOn = val;
+  } else {
+    if(val <= ch.warningOn) val = ch.warningOn + 1;
+    ch.dangerOn = val;
+  }
+  el.value = val;
+  const label = document.querySelector(`.settings-value[data-ch="${cid}"][data-kind="${kind}"]`);
+  if(label) label.textContent = val + '%';
+}
+function loadSettingsForm(){
+  const id = document.getElementById('settingsPatientSelect').value;
+  appState.settingsPatientId = id;
+  const s = Repository.thresholds[id];
+  selectedPreset = s.presetId;
+  pendingChannels = {};
+  CHANNEL_DEFS.forEach(c => { pendingChannels[c.id] = {...s.channels[c.id]}; });
+  pendingDurations = {warningDurationMs:s.warningDurationMs, dangerDurationMs:s.dangerDurationMs, releaseDurationMs:s.releaseDurationMs};
+  renderPresetCards(selectedPreset);
+  renderChannelToggles();
+  renderChannelThresholdsSection();
+  syncDurationSlidersFromPending();
+  document.getElementById('multiToggle').classList.toggle('on', s.multiChannelDanger);
+  document.getElementById('customMessage').value = s.message;
+  advancedOpen = false;
+  document.getElementById('advancedSettings').style.display = 'none';
+  document.getElementById('advancedToggleBtn').classList.remove('open');
+}
+function syncDurationSlidersFromPending(){
+  document.getElementById('warnDurSlider').value = pendingDurations.warningDurationMs;
+  document.getElementById('dangerDurSlider').value = pendingDurations.dangerDurationMs;
+  document.getElementById('releaseDurSlider').value = pendingDurations.releaseDurationMs;
+  onSlider();
+}
+function onSlider(){
+  const warnEl = document.getElementById('warnDurSlider'), dangerEl = document.getElementById('dangerDurSlider'), releaseEl = document.getElementById('releaseDurSlider');
+  if(parseInt(dangerEl.value) < parseInt(warnEl.value)) dangerEl.value = warnEl.value; // Danger Duration >= Warning Duration
+  document.getElementById('warnDurVal').textContent = warnEl.value + ' ms';
+  document.getElementById('dangerDurVal').textContent = dangerEl.value + ' ms';
+  document.getElementById('releaseDurVal').textContent = releaseEl.value + ' ms';
+}
+function saveSettings(){
+  const id = appState.settingsPatientId;
+  const s = Repository.thresholds[id];
+  s.presetId = selectedPreset;
+  s.warningDurationMs = parseInt(document.getElementById('warnDurSlider').value);
+  s.dangerDurationMs = parseInt(document.getElementById('dangerDurSlider').value);
+  s.releaseDurationMs = parseInt(document.getElementById('releaseDurSlider').value);
+  s.multiChannelDanger = document.getElementById('multiToggle').classList.contains('on');
+  s.message = document.getElementById('customMessage').value;
+  document.querySelectorAll('#channelToggles .toggle').forEach(t => { pendingChannels[t.dataset.ch].enabled = t.classList.contains('on'); });
+  CHANNEL_DEFS.forEach(c => {
+    const pc = pendingChannels[c.id];
+    s.channels[c.id] = makeChannelThreshold(pc.warningOn, pc.dangerOn);
+    s.channels[c.id].enabled = pc.enabled;
+  });
+  showToast('Settings saved for ' + Repository.patients.find(p=>p.id===id).name);
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* =========================================================
+   THEME + CLOCK
+   ========================================================= */
+function setTheme(mode){
+  document.documentElement.setAttribute('data-theme', mode);
+  document.getElementById('themeLightBtn')?.classList.toggle('active', mode==='light');
+  document.getElementById('themeDarkBtn')?.classList.toggle('active', mode==='dark');
+}
+setTheme(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+function tickClock(){
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+}
+tickClock(); setInterval(tickClock, 30000);
+</script>
