@@ -270,9 +270,72 @@ input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; 
 
 .electrode-guide{display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); font-size:12.5px; color:var(--text2); line-height:1.6;}
 .electrode-guide.show{display:block;}
+.electrode-diagram{width:100%; max-width:180px; display:block; margin:2px auto 14px;}
 
 ::placeholder{color:var(--text3);}
 
+/* ---------- exercise mode ---------- */
+.reco-banner{background:linear-gradient(135deg, var(--primary), var(--indigo)); border-radius:var(--r-lg); padding:18px 20px; color:#fff;}
+.reco-banner .rb-eyebrow{font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; opacity:.85;}
+.reco-banner .rb-title{font-size:16px; font-weight:800; margin-top:4px;}
+.reco-banner .rb-sub{font-size:12.5px; opacity:.9; margin-top:6px; line-height:1.5;}
+
+.exercise-progress{display:flex; align-items:center; gap:10px;}
+.exercise-progress .bar{flex:1; height:8px; border-radius:6px; background:var(--bg2); border:1px solid var(--border); overflow:hidden;}
+.exercise-progress .bar .fill{height:100%; background:var(--safe); border-radius:6px; transition:width .25s ease;}
+.exercise-progress .cnt{font-size:12.5px; font-weight:800; color:var(--navy); white-space:nowrap;}
+
+.exercise-card{background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg); padding:14px 16px; display:flex; align-items:center; gap:12px; cursor:pointer;}
+.exercise-card:active{background:var(--bg2);}
+.exercise-card.done{opacity:.6;}
+.exercise-thumb{width:52px;height:52px;border-radius:14px;background:var(--bg2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:22px; flex:0 0 auto; position:relative;}
+.exercise-thumb .playdot{position:absolute; bottom:-4px; right:-4px; width:20px;height:20px;border-radius:50%;background:var(--primary); color:#fff; display:flex;align-items:center;justify-content:center; font-size:9px; border:2px solid var(--card);}
+.exercise-card .body{flex:1; min-width:0;}
+.exercise-card .name{font-size:13.5px; font-weight:800; color:var(--navy);}
+.exercise-card .meta{font-size:11.5px; color:var(--text2); margin-top:2px;}
+.exercise-card .check{width:26px;height:26px;border-radius:50%; border:2px solid var(--border); flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:13px; color:transparent;}
+.exercise-card.done .check{background:var(--safe); border-color:var(--safe); color:#fff;}
+.app-logo-badge{width:24px;height:24px;border-radius:8px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex:0 0 auto;}
+.tag-chip{display:inline-block; font-size:10px; font-weight:800; padding:3px 8px; border-radius:var(--r-pill); background:var(--bg2); color:var(--text2); text-transform:uppercase; letter-spacing:.03em;}
+
+/* real YouTube video card — click-to-embed poster, with a guaranteed
+   external-link fallback since the embedded iframe may be blocked by a
+   sandboxed preview's CSP (works for real once viewed with normal
+   internet access, e.g. the ported Android app) */
+.video-player{position:relative; width:100%; aspect-ratio:16/9; border-radius:var(--r-md); background:var(--navy); overflow:hidden; display:flex; align-items:center; justify-content:center;}
+.video-player iframe{position:absolute; inset:0; width:100%; height:100%; border:none;}
+.vp-poster{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; cursor:pointer; background:linear-gradient(135deg, var(--navy), var(--indigo));}
+.vp-poster-icon{position:absolute; font-size:44px; opacity:0.35;}
+.vp-playbtn{position:relative; display:flex; align-items:center; justify-content:center;}
+.vp-playbtn .pb{width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,0.92); display:flex; align-items:center; justify-content:center; font-size:22px; color:var(--navy);}
+.video-note{font-size:11px; color:var(--text3); margin-top:6px; line-height:1.4; text-align:center;}
+.video-fallback-link{display:block; text-align:center; font-size:12.5px; font-weight:700; color:var(--primary); margin-top:4px; text-decoration:none;}
+
+/* clinician calendar */
+.cal-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+.cal-nav button{width:32px;height:32px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;cursor:pointer;}
+.cal-nav .cal-month{font-size:14.5px; font-weight:800; color:var(--navy);}
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
+.cal-dow{font-size:10px; font-weight:800; color:var(--text3); text-align:center; text-transform:uppercase; padding-bottom:4px;}
+.cal-cell{aspect-ratio:1; border-radius:10px; border:1px solid var(--border); background:var(--card); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; cursor:pointer; position:relative; font-size:11px;}
+.cal-cell.empty{border:none; background:none; cursor:default;}
+.cal-cell.selected{border-color:var(--primary); border-width:2px;}
+.cal-cell .cd-num{font-weight:700; color:var(--text);}
+.cal-cell .cd-dot{width:6px;height:6px;border-radius:50%;}
+.cal-cell .cd-dot.done{background:var(--safe);}
+.cal-cell .cd-dot.partial{background:var(--warning);}
+.cal-cell .cd-dot.none{background:var(--border);}
+.cal-cell .cd-alert{position:absolute; top:2px; right:2px; min-width:14px; height:14px; padding:0 3px; border-radius:8px; background:var(--danger); color:#fff; font-size:8.5px; font-weight:800; display:flex; align-items:center; justify-content:center;}
+.cal-cell .cd-alert.warn-only{background:var(--warning);}
+.cal-legend{display:flex; gap:14px; flex-wrap:wrap; margin-top:12px;}
+.cal-legend .li{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text2); font-weight:600;}
+.cal-legend .dot{width:8px;height:8px;border-radius:50%;}
+.cal-daycard{margin-top:16px;}
+
+.routine-pick-row{display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border);}
+.routine-pick-row:last-child{border-bottom:none;}
+.routine-pick-row .rp-num{width:56px;flex:0 0 auto;}
+.routine-pick-row .rp-num input{width:100%; height:36px; border-radius:10px; border:1.5px solid var(--border); background:var(--bg2); text-align:center; font-size:13px; color:var(--text);}
 /* installed-app overrides: fill the real device screen instead of showing
    the desktop "phone mockup inside a browser" chrome */
 body{padding:0; display:block; align-items:initial; justify-content:initial;}
@@ -309,8 +372,8 @@ body{padding:0; display:block; align-items:initial; justify-content:initial;}
           <!-- 2. ROLE SELECTION -->
           <section class="screen" data-screen="role">
             <div class="appbar"><h1>Welcome</h1><div></div></div>
-            <div class="scroll-pad">
-              <p style="color:var(--text2); font-size:13.5px; margin:0 0 20px;">Select how you'd like to use Re:Guard.</p>
+            <div class="scroll-pad" style="display:flex; flex-direction:column; justify-content:center;">
+              <p style="color:var(--text2); font-size:13.5px; margin:0 0 20px; text-align:center;">Select how you'd like to use Re:Guard.</p>
               <div class="stack">
                 <div class="role-card" onclick="selectRole('patient')">
                   <div class="ric">🧑</div>
@@ -349,10 +412,14 @@ body{padding:0; display:block; align-items:initial; justify-content:initial;}
 
           <!-- 4. PATIENT HOME -->
           <section class="screen" data-screen="patientHome">
-            <div class="scroll-pad" style="padding-top:18px;">
+            <div class="scroll-pad" style="padding-top:14px;">
+              <div class="row gap8" style="margin-bottom:10px; cursor:pointer; user-select:none;" onclick="onLogoTap()" title="Re:Guard">
+                <div class="app-logo-badge">🦶</div>
+                <span style="font-size:13px; font-weight:800; color:var(--navy); letter-spacing:.01em;">Re:Guard</span>
+              </div>
               <div style="margin-bottom:16px;">
-                <div style="font-size:13px; color:var(--text2); font-weight:600;">Good afternoon,</div>
-                <div style="font-size:21px; font-weight:800; color:var(--navy);">Emily</div>
+                <div style="font-size:13px; color:var(--text2); font-weight:600;" id="homeGreeting">Good afternoon,</div>
+                <div style="font-size:21px; font-weight:800; color:var(--navy);" id="homeUserName">Emily</div>
               </div>
               <div class="row gap8" style="margin-bottom:18px; flex-wrap:wrap;">
                 <span class="chip connected" id="braceChip"><span class="dot"></span>Brace Connected</span>
@@ -374,7 +441,7 @@ body{padding:0; display:block; align-items:initial; justify-content:initial;}
               <div class="section-header" style="margin-top:22px;"><h2>Muscle Activity</h2></div>
               <div class="stack" id="muscleChannels"></div>
 
-              <div class="section-header"><h2>Today's Summary</h2></div>
+              <div class="section-header"><h2>Today's Summary</h2><button class="link" onclick="go('dailyReport')">Full Report →</button></div>
               <div class="summary-grid">
                 <div class="summary-card"><div class="val tabular" id="sumWear">6h 42m</div><div class="lbl">Wear Time</div></div>
                 <div class="summary-card"><div class="val tabular" id="sumWarn">3</div><div class="lbl">Warning Alerts</div></div>
@@ -392,6 +459,44 @@ body{padding:0; display:block; align-items:initial; justify-content:initial;}
               <div style="height:10px;"></div>
             </div>
             <div class="bottomnav" id="patientNav"></div>
+          </section>
+
+          <!-- 4b. DEBUG MODE (hidden — reached by tapping the app logo 3x) -->
+          <section class="screen" data-screen="debugMode">
+            <div class="appbar">
+              <h1>Debug Mode</h1>
+              <button class="back" onclick="exitDebugMode()">✕</button>
+            </div>
+            <div class="scroll-pad">
+              <div class="row gap8" style="margin-bottom:16px;">
+                <span class="chip" id="debugConnChip"><span class="dot"></span>—</span>
+              </div>
+
+              <div id="calibrationIdlePanel">
+                <div class="section-header" style="margin-top:0;"><h2>Live EMG Values</h2></div>
+                <div class="stack" id="debugLiveValues" style="gap:10px;"></div>
+
+                <div class="section-header"><h2>Calculated Thresholds</h2></div>
+                <div class="card sm" id="debugThresholds"></div>
+
+                <div style="height:6px;"></div>
+                <button class="btn-primary" onclick="startCalibration()">Start Calibration</button>
+                <div style="height:10px;"></div>
+                <button class="btn-outline" id="redoCalibrationBtn" style="display:none;" onclick="startCalibration()">Redo Calibration</button>
+              </div>
+
+              <div id="calibrationActivePanel" style="display:none; text-align:center; padding:26px 0;">
+                <div style="font-size:13px; color:var(--text2); font-weight:700; margin-bottom:10px;">Relax your leg and ankle. Stay still.</div>
+                <div style="font-size:52px; font-weight:800; color:var(--navy);" class="tabular" id="calibrationCountdown">20</div>
+                <div style="font-size:12px; color:var(--text2); margin-top:8px;">Collecting baseline EMG data…</div>
+              </div>
+
+              <div id="calibrationResultPanel" style="display:none;"></div>
+
+              <div style="height:20px;"></div>
+              <button class="btn-outline btn-danger-outline" onclick="exitDebugMode()">Exit Debug Mode</button>
+              <div style="height:10px;"></div>
+            </div>
           </section>
 
           <!-- 5. PATIENT HISTORY -->
@@ -428,8 +533,8 @@ body{padding:0; display:block; align-items:initial; justify-content:initial;}
             <div class="scroll-pad">
               <div class="card sm stack" style="gap:12px;">
                 <div class="row gap12">
-                  <div class="avatar" style="width:52px;height:52px;font-size:18px;">EC</div>
-                  <div><div style="font-size:16.5px; font-weight:800; color:var(--navy);">Emily Carter</div><div style="font-size:12px; color:var(--text2);">Patient</div></div>
+                  <div class="avatar" style="width:52px;height:52px;font-size:18px;" id="profileAvatar">EC</div>
+                  <div><div style="font-size:16.5px; font-weight:800; color:var(--navy);" id="profileName">Emily Carter</div><div style="font-size:12px; color:var(--text2);">Patient</div></div>
                 </div>
               </div>
 
@@ -462,6 +567,18 @@ body{padding:0; display:block; align-items:initial; justify-content:initial;}
                 </div>
               </div>
 
+              <div class="section-header"><h2>Daily Report</h2></div>
+              <div class="card sm stack" style="gap:12px;">
+                <div class="row between">
+                  <div>
+                    <div style="font-size:13px; font-weight:700;">Evening Report Time</div>
+                    <div style="font-size:11.5px; color:var(--text2); margin-top:2px;">You'll get a reminder to view your daily summary at this time.</div>
+                  </div>
+                  <input type="time" id="dailyReportTimeInput" value="20:00" onchange="appState.dailyReportTime = this.value; showToast('Daily Report time set to ' + this.value)" style="border:1.5px solid var(--border); background:var(--bg2); border-radius:10px; padding:8px 10px; font-size:13px; color:var(--text);" />
+                </div>
+                <button class="btn-outline" onclick="go('dailyReport')">Preview Today's Report</button>
+              </div>
+
               <div class="section-header"><h2>Electrode Placement Guide</h2></div>
               <div class="card sm">
                 <div class="row between" style="cursor:pointer;" onclick="document.getElementById('elecGuide').classList.toggle('show')">
@@ -469,6 +586,16 @@ body{padding:0; display:block; align-items:initial; justify-content:initial;}
                   <span style="color:var(--primary); font-weight:800;">＋</span>
                 </div>
                 <div class="electrode-guide" id="elecGuide">
+                  <svg class="electrode-diagram" viewBox="0 0 120 200" role="img" aria-label="Diagram of EMG 1, 2, and 3 electrode placement on the lower leg">
+                    <rect x="40" y="10" width="30" height="150" rx="14" fill="none" stroke="var(--text3)" stroke-width="2"/>
+                    <path d="M40 150 Q40 166 56 169 L86 176 Q91 177 88 183 L44 183 Q37 181 37 168 Z" fill="none" stroke="var(--text3)" stroke-width="2"/>
+                    <circle cx="47" cy="48" r="6" fill="#2878D0" stroke="#fff" stroke-width="2"/>
+                    <text x="62" y="52" font-size="10" fill="var(--text)" font-weight="700">EMG 1</text>
+                    <circle cx="63" cy="96" r="6" fill="#4CC9B0" stroke="#fff" stroke-width="2"/>
+                    <text x="78" y="100" font-size="10" fill="var(--text)" font-weight="700">EMG 2</text>
+                    <circle cx="58" cy="142" r="6" fill="#6E7FDB" stroke="#fff" stroke-width="2"/>
+                    <text x="73" y="146" font-size="10" fill="var(--text)" font-weight="700">EMG 3</text>
+                  </svg>
                   1. Clean the skin before placing each electrode.<br/>
                   2. EMG 1 — place over the Tibialis Anterior, front of the shin.<br/>
                   3. EMG 2 — place over the Lateral Gastrocnemius, outer calf.<br/>
@@ -484,12 +611,70 @@ body{padding:0; display:block; align-items:initial; justify-content:initial;}
             <div class="bottomnav" id="patientNav3"></div>
           </section>
 
+          <!-- 6b. PATIENT EXERCISE MODE -->
+          <section class="screen" data-screen="patientExercise">
+            <div class="appbar"><h1>Exercise</h1><div style="width:34px;"></div></div>
+            <div class="scroll-pad">
+              <div class="reco-banner" id="recoBanner"></div>
+
+              <div class="section-header" style="margin-top:20px;"><h2>Today's Plan</h2></div>
+              <div class="exercise-progress" style="margin-bottom:14px;">
+                <div class="bar"><div class="fill" id="exProgFill"></div></div>
+                <span class="cnt" id="exProgCnt">0 / 0</span>
+              </div>
+              <div class="stack" id="exerciseList" style="gap:10px;"></div>
+
+              <div style="height:10px;"></div>
+            </div>
+            <div class="bottomnav" id="patientNav4"></div>
+          </section>
+
+          <!-- 6c. PATIENT DAILY REPORT -->
+          <section class="screen" data-screen="dailyReport">
+            <div class="appbar">
+              <button class="back" onclick="go('patientHome')">←</button>
+              <h1>Daily Report</h1>
+              <div style="width:34px;"></div>
+            </div>
+            <div class="scroll-pad">
+              <div style="font-size:12px; color:var(--text2); font-weight:700; margin-bottom:10px;" id="reportDateLabel">—</div>
+
+              <div class="section-header" style="margin-top:0;"><h2>Today's Status</h2></div>
+              <div class="status-hero safe" id="reportStatusHero">
+                <div class="curve"></div>
+                <div class="row gap12" style="position:relative;">
+                  <div class="status-icon safe" id="reportStatusIcon">🦶</div>
+                  <div>
+                    <div style="font-size:11.5px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.04em;">Overall Status</div>
+                    <div style="font-size:18px; font-weight:800; color:var(--navy);" id="reportStatusTitle">Stable</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section-header"><h2>Today's Key Numbers</h2></div>
+              <div class="card sm stack" style="gap:10px;" id="reportKeyNumbers"></div>
+
+              <div class="section-header"><h2>Time-of-Day Analysis</h2></div>
+              <div class="card sm">
+                <p style="margin:0; font-size:13px; color:var(--text); line-height:1.6;" id="reportTimeAnalysis">—</p>
+              </div>
+
+              <div class="section-header"><h2>Compared to Yesterday</h2></div>
+              <div class="card sm">
+                <p style="margin:0; font-size:13px; color:var(--text); line-height:1.6;" id="reportComparison">—</p>
+              </div>
+
+              <div style="height:10px;"></div>
+            </div>
+            <div class="bottomnav" id="patientNav5"></div>
+          </section>
+
           <!-- 7. CLINICIAN DASHBOARD -->
           <section class="screen" data-screen="clinicianDashboard">
             <div class="scroll-pad" style="padding-top:18px;">
               <div style="margin-bottom:18px;">
                 <div style="font-size:13px; color:var(--text2); font-weight:600;">Welcome back,</div>
-                <div style="font-size:19px; font-weight:800; color:var(--navy);">Dr. Sarah Kim</div>
+                <div style="font-size:19px; font-weight:800; color:var(--navy);" id="clinicianDisplayName">Dr. Sarah Kim</div>
               </div>
 
               <div class="summary-grid" style="margin-bottom:20px;">
@@ -571,13 +756,66 @@ body{padding:0; display:block; align-items:initial; justify-content:initial;}
               <div style="height:16px;"></div>
               <button class="btn-primary" onclick="goSettingsFor(currentPatientId)">Edit Threshold Settings</button>
               <div style="height:10px;"></div>
+              <button class="btn-outline" onclick="goRoutineEditorFor(currentPatientId)">Edit Exercise Routine</button>
+              <div style="height:10px;"></div>
+              <button class="btn-outline" onclick="goCalendarFor(currentPatientId)">View Exercise Calendar</button>
+              <div style="height:10px;"></div>
+              <button class="btn-outline" id="downloadReportBtn" onclick="downloadPatientReport(currentPatientId)">⬇ Download Report (CSV)</button>
+              <div style="height:10px;"></div>
             </div>
             <div class="bottomnav" id="clinNav3"></div>
           </section>
 
+          <!-- 9b. CLINICIAN ROUTINE EDITOR -->
+          <section class="screen" data-screen="routineEditor">
+            <div class="appbar">
+              <button class="back" onclick="go('patientDetail')">←</button>
+              <h1>Exercise Routine</h1>
+              <div style="width:34px;"></div>
+            </div>
+            <div class="scroll-pad">
+              <p style="font-size:12.5px; color:var(--text2); margin:0 0 16px; line-height:1.5;">Choose which exercises appear in <b id="routinePatientName">this patient's</b> Doctor's Routine, and set sets/reps for each.</p>
+              <div class="card sm" id="routinePickList"></div>
+              <div style="height:20px;"></div>
+              <button class="btn-primary" onclick="saveRoutine()">Save Routine</button>
+              <div style="height:10px;"></div>
+            </div>
+            <div class="bottomnav" id="clinNav5"></div>
+          </section>
+
+          <!-- 9c. CLINICIAN EXERCISE CALENDAR -->
+          <section class="screen" data-screen="patientCalendar">
+            <div class="appbar">
+              <button class="back" onclick="go('patientDetail')">←</button>
+              <h1 id="calPatientName">Calendar</h1>
+              <div style="width:34px;"></div>
+            </div>
+            <div class="scroll-pad">
+              <div class="cal-nav">
+                <button onclick="shiftCalMonth(-1)">‹</button>
+                <span class="cal-month" id="calMonthLabel">—</span>
+                <button onclick="shiftCalMonth(1)">›</button>
+              </div>
+              <div class="cal-grid" id="calGrid"></div>
+              <div class="cal-legend">
+                <span class="li"><span class="dot" style="background:var(--safe);"></span>Routine completed</span>
+                <span class="li"><span class="dot" style="background:var(--warning);"></span>Partially completed</span>
+                <span class="li"><span class="dot" style="background:var(--border);"></span>Not done</span>
+                <span class="li"><span class="dot" style="background:var(--danger);"></span>Alert count badge</span>
+              </div>
+              <div class="cal-daycard" id="calDayCard"></div>
+              <div style="height:10px;"></div>
+            </div>
+            <div class="bottomnav" id="clinNav6"></div>
+          </section>
+
           <!-- 10. CLINICIAN SETTINGS -->
           <section class="screen" data-screen="clinicianSettings">
-            <div class="appbar"><h1>Settings</h1><div style="width:34px;"></div></div>
+            <div class="appbar">
+              <button class="back" onclick="go('clinicianDashboard')">←</button>
+              <h1>Settings</h1>
+              <div style="width:34px;"></div>
+            </div>
             <div class="scroll-pad">
               <label class="field-label">Select Patient</label>
               <select id="settingsPatientSelect" onchange="loadSettingsForm()" style="width:100%; height:50px; border-radius:18px; border:1.5px solid var(--border); background:var(--bg2); padding:0 14px; font-size:14px; color:var(--text); margin-bottom:18px;"></select>
@@ -642,10 +880,37 @@ body{padding:0; display:block; align-items:initial; justify-content:initial;}
         <div class="overlay" id="alertOverlay">
           <div class="alert-dialog">
             <div class="badge" id="alertBadge">⚠️</div>
-            <h3 id="alertTitle">Attention Needed</h3>
+            <h3 id="alertTitle">Restricted Activity Detected</h3>
             <p id="alertMessage">Lateral gastrocnemius activity has continued for 0.8 seconds.</p>
-            <p class="guidance" id="alertGuidance">Stop pointing your foot downward and relax your ankle.</p>
-            <button class="btn-primary" onclick="closeAlert()">I Understand</button>
+            <p class="guidance" id="alertGuidance">Relax your ankle now.</p>
+            <button class="btn-primary" onclick="viewAlertDetails()">View Details</button>
+            <div style="height:10px;"></div>
+            <button class="btn-text" style="width:100%;" onclick="closeAlert()">Dismiss</button>
+          </div>
+        </div>
+
+        <!-- EXERCISE DETAIL OVERLAY -->
+        <div class="overlay" id="exerciseOverlay">
+          <div class="alert-dialog" style="text-align:left; max-height:88%; overflow-y:auto;">
+            <div class="video-player" id="exVideoPlayer" onclick="playExVideo()">
+              <div class="vp-poster" id="exVideoPoster">
+                <div class="vp-poster-icon" id="exVideoPosterIcon">🦶</div>
+                <div class="vp-playbtn"><div class="pb">▶</div></div>
+              </div>
+            </div>
+            <div class="video-note" id="exVideoNote">Tap to play the video guide.</div>
+            <a class="video-fallback-link" id="exVideoFallback" target="_blank" rel="noopener">▶ Open on YouTube ↗</a>
+            <h3 style="margin-top:14px;" id="exDetailName">Exercise</h3>
+            <div style="margin:4px 0 10px;"><span class="tag-chip" id="exDetailTag">Recommended</span></div>
+            <p id="exDetailDesc">Description</p>
+            <p class="guidance" id="exDetailSteps" style="text-align:left;"></p>
+            <div class="row between" style="margin:4px 0 18px;">
+              <span style="font-size:12.5px; color:var(--text2); font-weight:700;">Target</span>
+              <span style="font-size:12.5px; font-weight:800;" id="exDetailTarget">—</span>
+            </div>
+            <button class="btn-primary" id="exDoneBtn" onclick="toggleExerciseDoneFromModal()">Mark as Done</button>
+            <div style="height:10px;"></div>
+            <button class="btn-text" style="width:100%;" onclick="closeExerciseOverlay()">Close</button>
           </div>
         </div>
 
@@ -707,6 +972,44 @@ function makeThresholdSetting(){
   };
 }
 
+/* Exercise library — each exercise targets one EMG channel/muscle group.
+   videoUrl entries are real, verified YouTube videos (checked via WebFetch
+   before being added — never guessed/fabricated IDs). ex_ankle_circles and
+   ex_balance use the two links the user supplied directly (a Korean ankle
+   ligament/sprain rehab series, week 1 & 2); the rest were found via
+   WebSearch and confirmed to match the exercise before use. */
+const EXERCISE_LIBRARY = [
+  {id:'ex_dorsi', name:'Ankle Alphabet', channel:'ch1', icon:'🔤', unit:'reps', defaultSets:3, defaultReps:10,
+    desc:'Traces gentle dorsiflexion motion to mobilize the front of the ankle without loading the joint.',
+    steps:'1. Sit with leg extended.  2. Lift your toes toward your shin.  3. "Draw" each letter A–Z slowly in the air with your big toe.  4. Keep the motion smooth — no jerking.',
+    videoUrl:'https://www.youtube.com/watch?v=vHMJ0zgrsFU', videoTitle:'The "alphabet exercise" for foot and ankle strength'},
+  {id:'ex_calf_raise', name:'Seated Calf Raises', channel:'ch2', icon:'🦵', unit:'reps', defaultSets:3, defaultReps:12,
+    desc:'Gently loads the calf / lateral gastrocnemius to rebuild controlled plantarflexion strength.',
+    steps:'1. Sit with feet flat on the floor.  2. Press through the balls of your feet, lifting your heels.  3. Hold for 2 seconds.  4. Lower slowly.',
+    videoUrl:'https://www.youtube.com/watch?v=Lv9rklLUp2k', videoTitle:'Ankle exercise - Seated calf raise | heel raise'},
+  {id:'ex_eversion_band', name:'Resistance Band Eversion', channel:'ch3', icon:'🎗️', unit:'reps', defaultSets:3, defaultReps:15,
+    desc:'Strengthens the fibularis longus to improve lateral ankle stability.',
+    steps:'1. Loop a resistance band around both feet.  2. Anchor the uninjured foot.  3. Push the injured foot outward against the band.  4. Return slowly.',
+    videoUrl:'https://www.youtube.com/watch?v=xfrncpP5ONQ', videoTitle:'Ankle Eversion with Resistive Band - Ask Doctor Jo'},
+  {id:'ex_towel_stretch', name:'Towel Calf Stretch', channel:'ch2', icon:'🧻', unit:'sec hold', defaultSets:2, defaultReps:30,
+    desc:'A gentle static stretch to release tension after overactive plantarflexion.',
+    steps:'1. Loop a towel around the ball of your foot.  2. Keep your knee straight.  3. Pull your toes toward you until a gentle stretch.  4. Hold, breathing normally.',
+    videoUrl:'https://www.youtube.com/watch?v=6ifswsHkwlA', videoTitle:'Calf Stretch in Long Sitting - Ask Doctor Jo'},
+  {id:'ex_ankle_circles', name:'Ankle Circles', channel:'ch1', icon:'🔄', unit:'reps', defaultSets:2, defaultReps:10,
+    desc:'Improves general mobility across all three muscle groups with a low-impact circular motion.',
+    steps:'1. Lift your foot slightly off the ground.  2. Rotate slowly clockwise.  3. Repeat counter-clockwise.  4. Keep the motion controlled and pain-free.',
+    videoUrl:'https://youtu.be/hE0IsV4e9oE', videoTitle:'발목인대 & 염좌 재활운동 - 1주차 (Ankle Ligament & Sprain Rehab — Week 1)'},
+  {id:'ex_balance', name:'Single-Leg Balance', channel:'ch3', icon:'🧍', unit:'sec hold', defaultSets:3, defaultReps:20,
+    desc:'Builds proprioception and stabilizer strength (fibularis longus) to help prevent re-injury.',
+    steps:'1. Stand near a wall for safety.  2. Lift the uninjured leg slightly off the ground.  3. Balance on the injured ankle.  4. Hold, engaging the outer ankle.',
+    videoUrl:'https://youtu.be/5tX_Dqd7cak', videoTitle:'발목인대 & 염좌 재활운동 - 2주차 (Ankle Ligament & Sprain Rehab — Week 2)'},
+];
+function findExercise(id){ return EXERCISE_LIBRARY.find(e=>e.id===id); }
+function youtubeIdFromUrl(url){
+  const m = url.match(/(?:youtu\.be\/|[?&]v=)([A-Za-z0-9_-]{6,})/);
+  return m ? m[1] : null;
+}
+
 const Repository = {
   patients: [
     {id:'p1', name:'Emily Carter', injuryArea:'Right Ankle', diagnosis:'Grade II Ankle Sprain', braceStart:'Jul 10, 2026', clinician:'Dr. Sarah Kim', connection:'connected', battery:82, status:'safe', wearTime:'6h 42m', warnCount:3, dangerCount:1, mostActive:'Lateral Gastrocnemius'},
@@ -741,8 +1044,64 @@ const Repository = {
   weeklyTrend: [2,4,1,5,3,6,2],
   weekLabels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
   thresholds: {}, // patientId -> ThresholdSetting
+  routines: {},   // patientId -> {exercises:[{exerciseId, sets, reps}]}
+  exerciseLog: {}, // patientId -> {'YYYY-MM-DD': {doneIds:[...], warnCount, dangerCount}}
+  previousDayStats: {}, // patientId -> {warnCount, dangerCount, wearMinutes} — synthetic "yesterday" baseline for the Daily Report comparison
+  calibration: {},      // patientId -> {ch1:{median,mad,cautionThreshold,warningThreshold,releaseThreshold}, ch2:{...}, ch3:{...}, calibratedAt} | null
 };
 Repository.patients.forEach(p => Repository.thresholds[p.id] = makeThresholdSetting());
+
+/* Doctor-assigned routine — starter default, editable per patient from the
+   clinician's "Edit Exercise Routine" screen. */
+Repository.patients.forEach(p => {
+  Repository.routines[p.id] = { exercises: [
+    {exerciseId:'ex_ankle_circles', sets:2, reps:10},
+    {exerciseId:'ex_calf_raise', sets:3, reps:12},
+    {exerciseId:'ex_eversion_band', sets:3, reps:15},
+  ]};
+});
+
+function pad2(n){ return String(n).padStart(2,'0'); }
+function dateKey(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function todayKey(){ return dateKey(new Date()); }
+function seededRand(seed){ const x = Math.sin(seed)*10000; return x - Math.floor(x); }
+
+/* Synthetic exercise-completion + alert-count history so the clinician
+   calendar isn't empty on first load. Today's entry for the currently
+   monitored demo patient (p1) starts empty and fills in live as exercises
+   are marked done / alerts fire, instead of being backfilled here. */
+Repository.patients.forEach((p, pIdx) => {
+  const log = {};
+  const now = new Date();
+  const totalRoutine = Repository.routines[p.id].exercises.length;
+  for(let offset=60; offset>=0; offset--){
+    const d = new Date(now); d.setDate(now.getDate()-offset);
+    const key = dateKey(d);
+    if(offset === 0){ log[key] = {doneIds:[], warnCount:0, dangerCount:0}; continue; }
+    const seed = pIdx*97.13 + offset*13.37;
+    const r1 = seededRand(seed), r2 = seededRand(seed+1), r3 = seededRand(seed+2);
+    const doneCount = Math.min(totalRoutine, Math.round(r1 * (totalRoutine + 0.6)));
+    const doneIds = Repository.routines[p.id].exercises.slice(0, doneCount).map(e=>e.exerciseId);
+    const warnCount = Math.round(r2 * 4);
+    const dangerCount = r3 > 0.78 ? Math.round(r3 * 3) : 0;
+    log[key] = {doneIds, warnCount, dangerCount};
+  }
+  Repository.exerciseLog[p.id] = log;
+});
+function getDayLog(patientId, key){
+  const log = Repository.exerciseLog[patientId];
+  if(!log[key]) log[key] = {doneIds:[], warnCount:0, dangerCount:0};
+  return log[key];
+}
+Repository.patients.forEach((p, pIdx) => {
+  const seed = pIdx*31.4 + 5;
+  Repository.previousDayStats[p.id] = {
+    warnCount: Math.max(1, Math.round(seededRand(seed) * 6)),
+    dangerCount: Math.round(seededRand(seed+1) * 2),
+    wearMinutes: Math.round(300 + seededRand(seed+2) * 180),
+  };
+  Repository.calibration[p.id] = null;
+});
 
 const STATUS_LABEL = {safe:'Safe', warning:'Warning', danger:'Danger'};
 const STATUS_MSG = {
@@ -871,6 +1230,8 @@ const appState = {
   historyRange:'today', detailView:'simple', patientFilter:'all',
   currentPatientId:'p1', settingsPatientId:'p1',
   todayAlertCounts:{warning:3, danger:1},
+  dailyReportTime:'20:00', dailyReportDeliveredDate:null,
+  userName:'',
 };
 let currentPatientId = 'p1';
 const evaluator = new EmgAlertEvaluator(Repository.thresholds['p1']);
@@ -882,8 +1243,13 @@ function go(screen){
   document.getElementById('appBody').scrollTop = 0;
   if(screen === 'patientHome') renderPatientHome();
   if(screen === 'patientHistory') renderHistory();
+  if(screen === 'patientExercise') renderExerciseScreen();
+  if(screen === 'dailyReport') renderDailyReport();
+  if(screen === 'debugMode') renderDebugMode();
   if(screen === 'patientList') renderPatientList();
   if(screen === 'clinicianSettings') { document.getElementById('settingsPatientSelect').value = appState.settingsPatientId; loadSettingsForm(); }
+  if(screen === 'routineEditor') renderRoutineEditor();
+  if(screen === 'patientCalendar') renderCalendarScreen();
   updateBottomNavs();
 }
 
@@ -894,19 +1260,47 @@ function selectRole(role){
   document.getElementById('loginPass').value = '';
   go('login');
 }
-function doLogin(){ enterApp(); }
-function doDemo(){ if(!appState.role) appState.role = 'patient'; enterApp(); }
+const DEFAULT_DISPLAY_NAME = {patient:'Emily', clinician:'Dr. Sarah Kim'};
+function computeInitials(name){
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if(parts.length === 0) return '??';
+  if(parts.length === 1) return parts[0].slice(0,2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+function applyUserName(){
+  const name = appState.userName || DEFAULT_DISPLAY_NAME[appState.role] || '';
+  if(appState.role === 'patient'){
+    document.getElementById('homeUserName').textContent = name;
+    document.getElementById('profileName').textContent = name;
+    document.getElementById('profileAvatar').textContent = computeInitials(name);
+  } else if(appState.role === 'clinician'){
+    document.getElementById('clinicianDisplayName').textContent = name;
+  }
+}
+function doLogin(){
+  const typed = document.getElementById('loginName').value.trim();
+  appState.userName = typed || DEFAULT_DISPLAY_NAME[appState.role] || '';
+  enterApp();
+}
+function doDemo(){
+  if(!appState.role) appState.role = 'patient';
+  appState.userName = DEFAULT_DISPLAY_NAME[appState.role];
+  enterApp();
+}
 function enterApp(){
+  applyUserName();
   if(appState.role === 'clinician'){ go('clinicianDashboard'); } else { go('patientHome'); startLiveMonitoring(); }
 }
 function logout(){
   stopLiveMonitoring();
+  stopRawEmgTicker();
   appState.role = null;
+  appState.userName = '';
   go('role');
 }
 
 /* bottom navs (rebuilt into every host div so identical everywhere) */
-const PATIENT_NAV = [ {id:'patientHome', ic:'🏠', lbl:'Home'}, {id:'patientHistory', ic:'🕘', lbl:'History'}, {id:'patientProfile', ic:'👤', lbl:'Profile'} ];
+const PATIENT_NAV = [ {id:'patientHome', ic:'🏠', lbl:'Home'}, {id:'patientHistory', ic:'🕘', lbl:'History'}, {id:'patientExercise', ic:'💪', lbl:'Exercise'}, {id:'patientProfile', ic:'👤', lbl:'Profile'} ];
 const CLINICIAN_NAV = [ {id:'clinicianDashboard', ic:'📊', lbl:'Dashboard'}, {id:'clinicianSettings', ic:'⚙️', lbl:'Settings'} ];
 function buildNav(hostIds, items){
   hostIds.forEach(hostId => {
@@ -915,8 +1309,8 @@ function buildNav(hostIds, items){
     host.innerHTML = items.map(it => `<button data-id="${it.id}" onclick="go('${it.id}')"><span class="ic">${it.ic}</span>${it.lbl}</button>`).join('');
   });
 }
-buildNav(['patientNav','patientNav2','patientNav3'], PATIENT_NAV);
-buildNav(['clinNav','clinNav2','clinNav3','clinNav4'], CLINICIAN_NAV);
+buildNav(['patientNav','patientNav2','patientNav3','patientNav4','patientNav5'], PATIENT_NAV);
+buildNav(['clinNav','clinNav2','clinNav3','clinNav4','clinNav5','clinNav6'], CLINICIAN_NAV);
 function updateBottomNavs(){
   document.querySelectorAll('.bottomnav button').forEach(b => b.classList.toggle('active', b.dataset.id === appState.screen));
 }
@@ -1084,6 +1478,7 @@ function startLiveMonitoring(){
   if(monitoringTimer) return;
   let tick = 0;
   monitoringTimer = setInterval(() => {
+    if(calibrationState.active) return; // no alerts should fire while calibrating
     tick++;
     const spike = tick % 9 === 0 ? {ch2:true} : (tick % 14 === 0 ? {ch1:true, ch3:true} : null);
     const sample = FakeEmgDataSource.next(spike);
@@ -1110,7 +1505,7 @@ function triggerAlert(severity, cause, chState){
   const s = Repository.thresholds['p1'];
   document.getElementById('alertBadge').style.background = severity==='danger' ? 'var(--danger-tint)' : 'var(--warning-tint)';
   document.getElementById('alertBadge').textContent = severity==='danger' ? '⛔' : '⚠️';
-  document.getElementById('alertTitle').textContent = severity==='danger' ? 'Danger Detected' : 'Attention Needed';
+  document.getElementById('alertTitle').textContent = severity==='danger' ? 'Danger Detected' : 'Restricted Activity Detected';
   document.getElementById('alertMessage').textContent = `${cause} activity has continued for ${sec} seconds.`;
   document.getElementById('alertGuidance').textContent = s.message;
   document.getElementById('alertOverlay').classList.add('show');
@@ -1121,15 +1516,247 @@ function triggerAlert(severity, cause, chState){
   if(severity==='warning') appState.todayAlertCounts.warning++; else appState.todayAlertCounts.danger++;
   document.getElementById('sumWarn').textContent = appState.todayAlertCounts.warning;
   document.getElementById('sumDanger').textContent = appState.todayAlertCounts.danger;
+  const todayLog = getDayLog('p1', todayKey());
+  todayLog.warnCount = appState.todayAlertCounts.warning;
+  todayLog.dangerCount = appState.todayAlertCounts.danger;
 
   if('Notification' in window){
     try{
-      if(Notification.permission === 'granted'){ new Notification('Re:Guard · '+ (severity==='danger'?'Danger':'Warning'), {body: document.getElementById('alertMessage').textContent}); }
+      if(Notification.permission === 'granted'){ new Notification(document.getElementById('alertTitle').textContent, {body: document.getElementById('alertMessage').textContent + ' ' + s.message}); }
       else if(Notification.permission !== 'denied'){ Notification.requestPermission(); }
     }catch(e){}
   }
 }
 function closeAlert(){ document.getElementById('alertOverlay').classList.remove('show'); }
+function viewAlertDetails(){ closeAlert(); go('patientHistory'); }
+
+/* =========================================================
+   DEBUG MODE + THRESHOLD CALIBRATION
+   (hidden screen — reached by tapping the app logo 3x within ~1.2s)
+   ========================================================= */
+let logoTapCount = 0, logoTapResetTimer = null;
+function onLogoTap(){
+  logoTapCount++;
+  clearTimeout(logoTapResetTimer);
+  logoTapResetTimer = setTimeout(() => { logoTapCount = 0; }, 1200);
+  if(logoTapCount >= 3){
+    logoTapCount = 0;
+    clearTimeout(logoTapResetTimer);
+    go('debugMode');
+  }
+}
+function exitDebugMode(){
+  stopRawEmgTicker();
+  if(calibrationState.active) finishCalibration({ok:false, reason:'cancelled'});
+  go('patientHome');
+}
+
+/* RawEmg — a small rolling-RMS layer on top of FakeEmgDataSource. The main
+   monitoring loop treats FakeEmgDataSource's per-tick value as an
+   already-smoothed activation level; this instead samples noisy "raw"
+   values every 20ms around that level and computes a true 100ms-window
+   RMS per channel, since the calibration spec explicitly asks for a
+   100ms rolling RMS rather than a single instantaneous reading. */
+const RawEmg = {
+  windowMs: 100,
+  buffers: {ch1:[], ch2:[], ch3:[]},
+  tick(){
+    const now = Date.now();
+    const rms = {};
+    ['ch1','ch2','ch3'].forEach(id => {
+      const base = FakeEmgDataSource.base[id];
+      const raw = Math.max(0, Math.min(100, base + (Math.random()*10 - 5)));
+      const buf = this.buffers[id];
+      buf.push({t:now, v:raw});
+      while(buf.length && now - buf[0].t > this.windowMs) buf.shift();
+      const meanSq = buf.reduce((s,pt) => s + pt.v*pt.v, 0) / buf.length;
+      rms[id] = Math.sqrt(meanSq);
+    });
+    return rms;
+  }
+};
+let rawEmgTimer = null;
+function startRawEmgTicker(){
+  if(rawEmgTimer) return;
+  rawEmgTimer = setInterval(() => {
+    const rms = RawEmg.tick();
+    updateDebugLiveValues(rms);
+    if(calibrationState.active) collectCalibrationSample(rms);
+  }, 20);
+}
+function stopRawEmgTicker(){
+  clearInterval(rawEmgTimer);
+  rawEmgTimer = null;
+}
+function updateDebugLiveValues(rms){
+  const p = Repository.patients.find(x => x.id === 'p1');
+  const chip = document.getElementById('debugConnChip');
+  if(chip){
+    chip.className = 'chip ' + (p.connection === 'connected' ? 'connected' : 'disconnected');
+    chip.innerHTML = '<span class="dot"></span>' + (p.connection === 'connected' ? 'Sensor Connected' : 'Sensor Disconnected');
+  }
+  CHANNEL_DEFS.forEach(c => {
+    const rawEl = document.getElementById('debugRaw_' + c.id);
+    const rmsEl = document.getElementById('debugRms_' + c.id);
+    if(rawEl) rawEl.textContent = FakeEmgDataSource.base[c.id].toFixed(1);
+    if(rmsEl) rmsEl.textContent = rms[c.id].toFixed(1);
+  });
+}
+function renderDebugMode(){
+  document.getElementById('debugLiveValues').innerHTML = CHANNEL_DEFS.map(c => `
+    <div class="card sm">
+      <div class="row between"><span style="font-size:13px; font-weight:700;">${c.short} · ${c.name}</span><span class="tabular" id="debugRaw_${c.id}" style="font-weight:800;">—</span></div>
+      <div class="row between" style="margin-top:6px;"><span style="font-size:11.5px; color:var(--text2);">Rolling RMS (100ms)</span><span class="tabular" id="debugRms_${c.id}">—</span></div>
+    </div>`).join('');
+  renderDebugThresholds();
+  document.getElementById('calibrationIdlePanel').style.display = 'block';
+  document.getElementById('calibrationActivePanel').style.display = 'none';
+  document.getElementById('calibrationResultPanel').style.display = 'none';
+  document.getElementById('calibrationResultPanel').innerHTML = '';
+  startRawEmgTicker();
+}
+function renderDebugThresholds(){
+  const cal = Repository.calibration.p1;
+  const redoBtn = document.getElementById('redoCalibrationBtn');
+  if(!cal){
+    document.getElementById('debugThresholds').innerHTML = emptyRow('Not calibrated yet.');
+    redoBtn.style.display = 'none';
+    return;
+  }
+  redoBtn.style.display = 'block';
+  const rows = CHANNEL_DEFS.map((c,i) => `
+    <div class="row between" style="padding:6px 0;">
+      <span style="font-size:12.5px; font-weight:700;">${c.short}</span>
+      <span class="tabular" style="font-size:11px; color:var(--text2);">C ${cal[c.id].cautionThreshold.toFixed(1)} · W ${cal[c.id].warningThreshold.toFixed(1)} · R ${cal[c.id].releaseThreshold.toFixed(1)}</span>
+    </div>${i < CHANNEL_DEFS.length-1 ? '<div class="divider" style="margin:2px 0;"></div>' : ''}`).join('');
+  document.getElementById('debugThresholds').innerHTML = rows +
+    `<div style="font-size:10.5px; color:var(--text3); margin-top:8px;">Calibrated ${new Date(cal.calibratedAt).toLocaleString('en-US',{month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})} · C=Caution, W=Warning, R=Release</div>`;
+}
+
+/* ---- calibration wizard: 20s hold-still, collect rolling-RMS samples,
+   then median + 5*MAD robust thresholding (outlier-resistant, so noisy
+   samples during the hold don't skew the baseline the way mean+stdev would) */
+const CALIBRATION_DURATION_S = 20;
+const MIN_CALIBRATION_SAMPLES = 100; // ~20s at a 20ms tick, with slack for timer drift
+let calibrationState = { active:false, samples:{ch1:[], ch2:[], ch3:[]}, remaining:CALIBRATION_DURATION_S, timerId:null };
+function startCalibration(){
+  calibrationState = { active:true, samples:{ch1:[], ch2:[], ch3:[]}, remaining:CALIBRATION_DURATION_S, timerId:null };
+  document.getElementById('calibrationIdlePanel').style.display = 'none';
+  document.getElementById('calibrationResultPanel').style.display = 'none';
+  document.getElementById('calibrationResultPanel').innerHTML = '';
+  document.getElementById('calibrationActivePanel').style.display = 'block';
+  document.getElementById('calibrationCountdown').textContent = calibrationState.remaining;
+  calibrationState.timerId = setInterval(() => {
+    const p = Repository.patients.find(x => x.id === 'p1');
+    if(p.connection !== 'connected'){ finishCalibration({ok:false, reason:'disconnected'}); return; }
+    calibrationState.remaining--;
+    document.getElementById('calibrationCountdown').textContent = Math.max(0, calibrationState.remaining);
+    if(calibrationState.remaining <= 0) finishCalibration(null);
+  }, 1000);
+}
+function collectCalibrationSample(rms){
+  if(!calibrationState.active) return;
+  ['ch1','ch2','ch3'].forEach(id => calibrationState.samples[id].push(rms[id]));
+}
+/* Pure function (no DOM) so it's directly unit-testable: returns
+   {ok:true, median, mad, cautionThreshold, warningThreshold, releaseThreshold}
+   or {ok:false, reason}. */
+function evaluateCalibrationSamples(samples){
+  if(!samples || samples.length < MIN_CALIBRATION_SAMPLES) return {ok:false, reason:'insufficient_data'};
+  if(samples.some(v => typeof v !== 'number' || Number.isNaN(v))) return {ok:false, reason:'nan'};
+  const saturatedFrac = samples.filter(v => v >= 99).length / samples.length;
+  if(saturatedFrac > 0.3) return {ok:false, reason:'saturated'};
+  const sorted = [...samples].sort((a,b) => a-b);
+  const median = sorted[Math.floor(sorted.length/2)];
+  const absDevs = samples.map(v => Math.abs(v - median)).sort((a,b) => a-b);
+  const mad = absDevs[Math.floor(absDevs.length/2)];
+  if(mad < 0.3) return {ok:false, reason:'low_variance'};
+  const cautionThreshold = median + 5.0*mad;
+  const warningThreshold = cautionThreshold * 1.5;
+  const releaseThreshold = cautionThreshold * 0.7;
+  return {ok:true, median, mad, cautionThreshold, warningThreshold, releaseThreshold};
+}
+const CALIBRATION_FAILURE_MESSAGES = {
+  disconnected: 'The sensor disconnected during calibration.',
+  insufficient_data: 'Not enough data was collected — please try again without interruption.',
+  nan: 'Invalid (NaN) readings were detected from the sensor.',
+  saturated: 'The signal was saturated (stuck near maximum) — check electrode placement.',
+  low_variance: "The signal barely changed at all — check that the sensor is making good contact.",
+  cancelled: 'Calibration was cancelled.',
+};
+function finishCalibration(forcedResult){
+  clearInterval(calibrationState.timerId);
+  calibrationState.active = false;
+  let failure = forcedResult && forcedResult.ok === false ? forcedResult : null;
+  const resultsByChannel = {};
+  if(!failure){
+    for(const c of CHANNEL_DEFS){
+      const r = evaluateCalibrationSamples(calibrationState.samples[c.id]);
+      if(!r.ok){ failure = r; break; }
+      resultsByChannel[c.id] = r;
+    }
+  }
+  document.getElementById('calibrationActivePanel').style.display = 'none';
+  document.getElementById('calibrationResultPanel').style.display = 'block';
+  if(failure){
+    document.getElementById('calibrationResultPanel').innerHTML = calibrationFailureHtml(failure.reason);
+  } else {
+    Repository.calibration.p1 = {ch1:resultsByChannel.ch1, ch2:resultsByChannel.ch2, ch3:resultsByChannel.ch3, calibratedAt:Date.now()};
+    applyCalibrationToThresholds('p1');
+    document.getElementById('calibrationResultPanel').innerHTML = calibrationSuccessHtml(resultsByChannel);
+    renderDebugThresholds();
+  }
+}
+function calibrationFailureHtml(reason){
+  return `<div class="card sm" style="border-color:var(--danger);">
+      <div style="font-size:14px; font-weight:800; color:var(--danger); margin-bottom:6px;">⚠️ Calibration Failed</div>
+      <div style="font-size:13px; color:var(--text); line-height:1.5;">${CALIBRATION_FAILURE_MESSAGES[reason] || 'Calibration failed.'}</div>
+    </div>
+    <div style="height:14px;"></div>
+    <button class="btn-primary" onclick="startCalibration()">Try Again</button>
+    <div style="height:10px;"></div>
+    <button class="btn-text" style="width:100%;" onclick="renderDebugMode()">Back</button>`;
+}
+function calibrationSuccessHtml(results){
+  const rows = CHANNEL_DEFS.map(c => {
+    const r = results[c.id];
+    return `<div class="row between" style="padding:6px 0;"><span style="font-size:12.5px; font-weight:700;">${c.short}</span><span class="tabular" style="font-size:11px; color:var(--text2);">C ${r.cautionThreshold.toFixed(1)} · W ${r.warningThreshold.toFixed(1)} · R ${r.releaseThreshold.toFixed(1)}</span></div>`;
+  }).join('<div class="divider" style="margin:2px 0;"></div>');
+  return `<div class="card sm" style="border-color:var(--safe);">
+      <div style="font-size:14px; font-weight:800; color:var(--safe); margin-bottom:8px;">✅ Calibration Complete</div>
+      <div style="font-size:12.5px; color:var(--text); margin-bottom:10px; line-height:1.5;">New thresholds have been saved and are now used for real-time monitoring.</div>
+      ${rows}
+    </div>
+    <div style="height:14px;"></div>
+    <button class="btn-outline" onclick="renderDebugMode()">Done</button>`;
+}
+/* Applies a successful calibration to the live ThresholdSetting the
+   EmgAlertEvaluator actually reads. Caution -> warningOn (the existing
+   "medium tier" onset), Warning -> dangerOn ("high tier" onset). The
+   calibration spec has ONE release edge shared by both tiers (drop below
+   it for releaseDurationMs -> NORMAL from either tier) rather than the
+   preset system's two independent hysteresis edges, so both warningOff
+   and dangerOff are set to releaseThreshold instead of going through
+   computeOffThresholds()'s 82%/85% heuristic. */
+function applyCalibrationToThresholds(patientId){
+  const cal = Repository.calibration[patientId];
+  const s = Repository.thresholds[patientId];
+  s.presetId = 'calibrated';
+  CHANNEL_DEFS.forEach(c => {
+    const r = cal[c.id];
+    const prevEnabled = s.channels[c.id] ? s.channels[c.id].enabled : true;
+    s.channels[c.id] = {
+      warningOn: r.cautionThreshold,
+      warningOff: r.releaseThreshold,
+      dangerOn: r.warningThreshold,
+      dangerOff: r.releaseThreshold,
+      enabled: prevEnabled,
+    };
+  });
+  s.warningDurationMs = 200;
+  s.dangerDurationMs = 300;
+  s.releaseDurationMs = 500;
+}
 
 /* =========================================================
    RENDER: Patient History
@@ -1161,6 +1788,221 @@ function alertItemHtml(a){
     <div class="body"><div class="top">${a.channel}</div><div class="meta">${a.time} · ${STATUS_LABEL[a.severity]} · ${a.durationSec.toFixed(1)} sec</div></div></div>`;
 }
 function emptyRow(text){ return `<div style="padding:14px 0; text-align:center; font-size:12.5px; color:var(--text2);">${text}</div>`; }
+
+/* =========================================================
+   RENDER: Patient Exercise Mode
+   ========================================================= */
+/* "Today's Focus" picks the channel with the most warning/danger alerts
+   today (danger weighted 2x) and recommends exercises tagged to that
+   muscle — the idea being that day's overactive/restricted muscle should
+   get extra mobility/release work, not just whatever's in the fixed
+   doctor routine. Falls back to the patient's mostActive channel if no
+   alerts have fired yet today. */
+function computeTodayFocusChannel(patientId){
+  const alerts = Repository.alerts[patientId] || [];
+  const counts = {ch1:0, ch2:0, ch3:0};
+  alerts.forEach(a => {
+    const def = CHANNEL_DEFS.find(c => c.name === a.channel);
+    if(def) counts[def.id] += (a.severity === 'danger' ? 2 : 1);
+  });
+  let top = null, topVal = 0;
+  Object.keys(counts).forEach(id => { if(counts[id] > topVal){ topVal = counts[id]; top = id; } });
+  if(!top){
+    const p = Repository.patients.find(x => x.id === patientId);
+    const def = p && CHANNEL_DEFS.find(c => c.name === p.mostActive);
+    top = def ? def.id : 'ch2';
+  }
+  return top;
+}
+function getRecommendedExerciseIds(patientId){
+  const ch = computeTodayFocusChannel(patientId);
+  return EXERCISE_LIBRARY.filter(e => e.channel === ch).map(e => e.id).slice(0, 2);
+}
+function getTodayExerciseItems(patientId){
+  const routine = Repository.routines[patientId].exercises;
+  const recommendedIds = getRecommendedExerciseIds(patientId);
+  const items = routine.map(r => ({exerciseId:r.exerciseId, sets:r.sets, reps:r.reps, source:'routine', recommended: recommendedIds.includes(r.exerciseId)}));
+  recommendedIds.forEach(id => {
+    if(!items.some(it => it.exerciseId === id)){
+      const ex = findExercise(id);
+      items.unshift({exerciseId:id, sets:ex.defaultSets, reps:ex.defaultReps, source:'recommended', recommended:true});
+    }
+  });
+  return items;
+}
+function exerciseCardHtml(item){
+  const ex = findExercise(item.exerciseId);
+  const done = getDayLog('p1', todayKey()).doneIds.includes(item.exerciseId);
+  const tag = item.source === 'routine' ? "Doctor's Routine" : 'Recommended Today';
+  return `<div class="exercise-card${done?' done':''}" data-ex="${ex.id}" onclick="openExerciseDetail('${ex.id}','${item.source}')">
+    <div class="exercise-thumb">${ex.icon}<span class="playdot">▶</span></div>
+    <div class="body">
+      <div class="name">${ex.name}</div>
+      <div class="meta">${tag} · ${item.sets}×${item.reps} ${ex.unit}</div>
+    </div>
+    <div class="check" onclick="event.stopPropagation(); markExerciseDone('${ex.id}', ${!done});">${done?'✓':''}</div>
+  </div>`;
+}
+function renderExerciseScreen(){
+  const focusCh = computeTodayFocusChannel('p1');
+  const focusDef = CHANNEL_DEFS.find(c => c.id === focusCh);
+  document.getElementById('recoBanner').innerHTML = `
+    <div class="rb-eyebrow">Today's Focus</div>
+    <div class="rb-title">Ease your ${focusDef.name}</div>
+    <div class="rb-sub">Based on today's EMG activity, this muscle has been the most restricted or overactive channel. The exercises below are picked to help release tension and rebuild control.</div>`;
+  const items = getTodayExerciseItems('p1');
+  document.getElementById('exerciseList').innerHTML = items.map(exerciseCardHtml).join('');
+  const doneIds = getDayLog('p1', todayKey()).doneIds;
+  const doneCount = items.filter(it => doneIds.includes(it.exerciseId)).length;
+  document.getElementById('exProgCnt').textContent = `${doneCount} / ${items.length}`;
+  document.getElementById('exProgFill').style.width = items.length ? (doneCount/items.length*100)+'%' : '0%';
+}
+function markExerciseDone(exerciseId, done){
+  const log = getDayLog('p1', todayKey());
+  const idx = log.doneIds.indexOf(exerciseId);
+  if(done && idx === -1) log.doneIds.push(exerciseId);
+  if(!done && idx !== -1) log.doneIds.splice(idx, 1);
+  renderExerciseScreen();
+  if(document.getElementById('exerciseOverlay').classList.contains('show') && currentExerciseId === exerciseId) syncExDoneBtn();
+}
+let currentExerciseId = null;
+function openExerciseDetail(exerciseId, source){
+  currentExerciseId = exerciseId;
+  const ex = findExercise(exerciseId);
+  document.getElementById('exDetailName').textContent = ex.name;
+  document.getElementById('exDetailTag').textContent = source === 'routine' ? "Doctor's Routine" : 'Recommended Today';
+  document.getElementById('exDetailDesc').textContent = ex.desc;
+  document.getElementById('exDetailSteps').textContent = ex.steps;
+  document.getElementById('exDetailTarget').textContent = CHANNEL_DEFS.find(c=>c.id===ex.channel).name;
+  const fallback = document.getElementById('exVideoFallback');
+  fallback.href = ex.videoUrl;
+  fallback.title = ex.videoTitle;
+  syncExDoneBtn();
+  document.getElementById('exerciseOverlay').classList.add('show');
+  playExVideo(); // load immediately — no extra tap-to-play step
+}
+function resetExVideoToPoster(ex){
+  const player = document.getElementById('exVideoPlayer');
+  player.innerHTML = `
+    <div class="vp-poster" onclick="playExVideo()">
+      <div class="vp-poster-icon">${ex.icon}</div>
+      <div class="vp-playbtn"><div class="pb">▶</div></div>
+    </div>`;
+  document.getElementById('exVideoNote').textContent = 'Tap to play the video guide.';
+}
+function playExVideo(){
+  const ex = findExercise(currentExerciseId);
+  const videoId = youtubeIdFromUrl(ex.videoUrl);
+  const player = document.getElementById('exVideoPlayer');
+  if(!videoId){
+    document.getElementById('exVideoNote').textContent = "Couldn't load this video here — use the link below.";
+    return;
+  }
+  player.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0" title="${ex.name} video guide" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+  document.getElementById('exVideoNote').textContent = "If the video doesn't load here (preview sandboxes can block embeds), use the link below — it always works.";
+}
+function syncExDoneBtn(){
+  const done = getDayLog('p1', todayKey()).doneIds.includes(currentExerciseId);
+  document.getElementById('exDoneBtn').textContent = done ? 'Marked as Done ✓' : 'Mark as Done';
+}
+function toggleExerciseDoneFromModal(){
+  const done = getDayLog('p1', todayKey()).doneIds.includes(currentExerciseId);
+  markExerciseDone(currentExerciseId, !done);
+}
+function closeExerciseOverlay(){
+  document.getElementById('exerciseOverlay').classList.remove('show');
+  resetExVideoToPoster(findExercise(currentExerciseId));
+}
+
+/* =========================================================
+   RENDER: Patient Daily Report
+   ========================================================= */
+function parseTimeToHour(timeStr){
+  const m = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if(!m) return null;
+  let h = parseInt(m[1], 10) % 12;
+  if(/PM/i.test(m[3])) h += 12;
+  return h;
+}
+function computeTimeOfDayText(alerts){
+  const buckets = [
+    {label:'12:00 AM and 6:00 AM', from:0, to:6},
+    {label:'6:00 AM and 12:00 PM', from:6, to:12},
+    {label:'12:00 PM and 5:00 PM', from:12, to:17},
+    {label:'5:00 PM and 9:00 PM', from:17, to:21},
+    {label:'9:00 PM and 12:00 AM', from:21, to:24},
+  ];
+  const counts = buckets.map(() => 0);
+  alerts.forEach(a => {
+    const h = parseTimeToHour(a.time);
+    if(h == null) return;
+    const idx = buckets.findIndex(b => h >= b.from && h < b.to);
+    if(idx >= 0) counts[idx]++;
+  });
+  let maxIdx = 0;
+  counts.forEach((c,i) => { if(c > counts[maxIdx]) maxIdx = i; });
+  if(counts[maxIdx] === 0) return 'Not enough alerts today to analyze timing yet.';
+  return `Most alerts occurred between ${buckets[maxIdx].label}.`;
+}
+function computeYesterdayComparisonText(todayWarn, yestWarn){
+  if(yestWarn === 0){
+    if(todayWarn === 0) return 'No warning alerts today or yesterday.';
+    return `You had ${todayWarn} warning alert${todayWarn===1?'':'s'} today, versus none yesterday.`;
+  }
+  const pct = Math.round(((todayWarn - yestWarn) / yestWarn) * 100);
+  if(pct === 0) return 'Warning alerts are about the same as yesterday.';
+  const dir = pct > 0 ? 'increased' : 'decreased';
+  return `Warning alerts ${dir} by ${Math.abs(pct)}% compared with yesterday.`;
+}
+function reportKeyNumberRow(label, value, isLast){
+  return `<div class="row between"><span style="font-size:13px; color:var(--text2);">${label}</span><span style="font-size:13px; font-weight:700;">${value}</span></div>${isLast ? '' : '<div class="divider" style="margin:0;"></div>'}`;
+}
+function renderDailyReport(){
+  const p = Repository.patients.find(x => x.id === 'p1');
+  const warn = appState.todayAlertCounts.warning;
+  const danger = appState.todayAlertCounts.danger;
+  let status = 'safe', label = 'Stable';
+  if(danger > 0){ status = 'danger'; label = 'Needs Attention'; }
+  else if(warn > 0){ status = 'warning'; label = 'Moderate Activity'; }
+
+  document.getElementById('reportDateLabel').textContent = new Date().toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
+  const hero = document.getElementById('reportStatusHero');
+  hero.className = 'status-hero ' + status;
+  document.getElementById('reportStatusIcon').className = 'status-icon ' + status;
+  document.getElementById('reportStatusIcon').textContent = STATUS_ICON[status];
+  document.getElementById('reportStatusTitle').textContent = label;
+
+  const alerts = Repository.alerts.p1;
+  const longest = alerts.reduce((m,a) => Math.max(m, a.durationSec), 0);
+  const focusName = CHANNEL_DEFS.find(c => c.id === computeTodayFocusChannel('p1')).name;
+  const rows = [
+    ['Wear Time', p.wearTime],
+    ['Warning Alerts', String(warn)],
+    ['Danger Alerts', String(danger)],
+    ['Longest Activity', longest.toFixed(1) + ' sec'],
+    ['Most Active Muscle', focusName],
+  ];
+  document.getElementById('reportKeyNumbers').innerHTML = rows.map((r,i) => reportKeyNumberRow(r[0], r[1], i === rows.length-1)).join('');
+
+  document.getElementById('reportTimeAnalysis').textContent = computeTimeOfDayText(alerts);
+  document.getElementById('reportComparison').textContent = computeYesterdayComparisonText(warn, Repository.previousDayStats.p1.warnCount);
+}
+function checkDailyReportSchedule(){
+  if(appState.dailyReportDeliveredDate === todayKey()) return;
+  const now = new Date();
+  const nowHm = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+  if(nowHm !== appState.dailyReportTime) return;
+  appState.dailyReportDeliveredDate = todayKey();
+  showToast('📋 Your Daily Report is ready — tap to view', () => go('dailyReport'));
+  if('Notification' in window){
+    try{
+      if(Notification.permission === 'granted'){
+        const n = new Notification('Re:Guard · Daily Report', {body:"Today's rehab summary is ready to view."});
+        n.onclick = () => { go('dailyReport'); n.close(); };
+      }
+    }catch(e){}
+  }
+}
 
 /* =========================================================
    RENDER: Clinician Dashboard / Patient List / Detail
@@ -1237,6 +2079,260 @@ function renderDetailChannels(){
 function goSettingsFor(id){
   appState.settingsPatientId = id;
   go('clinicianSettings');
+}
+
+/* =========================================================
+   CLINICIAN REPORT EXPORT (CSV)
+   ========================================================= */
+/* Read-only lookup — unlike getDayLog(), never creates/mutates entries,
+   since the CSV export walks a much wider date range (brace-start to
+   today) than the 60-day window the calendar cares about and shouldn't
+   pollute Repository.exerciseLog with zeroed placeholder days. */
+function peekDayLog(patientId, key){
+  return Repository.exerciseLog[patientId][key] || {doneIds:[], warnCount:0, dangerCount:0};
+}
+function csvField(v){
+  v = String(v);
+  return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+/* Column meanings (also explained to the user in chat, not just here):
+   - Date: calendar day.
+   - Wear Time (hours): hours the brace was worn that day.
+   - Warning/Danger Alerts: same counts shown in the app's History screen
+     and clinician Calendar for that day — pulled from the same
+     Repository.exerciseLog entries so it's at least internally consistent
+     with the rest of the prototype for the ~60 days that log covers.
+   - {Muscle} Activity (%): average EMG activation for that channel that
+     day, on the same 0-100 sensitivity scale used by the muscle-activity
+     bars elsewhere in the app. NOTE: this whole app has no backend/device,
+     so — like the exerciseLog history and the RMS chart — these are
+     freshly synthesized per export, not cross-checked against any other
+     chart for the same patient/day. Fine for demoing the export mechanism
+     and layout, not meant to be read as real measurements. */
+function generateReportCsv(patientId){
+  const p = Repository.patients.find(x => x.id === patientId);
+  const pIdx = Repository.patients.findIndex(x => x.id === patientId);
+  const start = new Date(p.braceStart);
+  const today = new Date();
+  const msPerDay = 86400000;
+  let dayCount = Math.floor((new Date(dateKey(today)) - new Date(dateKey(start))) / msPerDay) + 1;
+  if(!Number.isFinite(dayCount) || dayCount < 1) dayCount = 30; // braceStart didn't parse — fall back to a 30-day window
+  dayCount = Math.min(180, dayCount);
+
+  const info = [
+    ['Re:Guard Patient Report'],
+    ['Patient:', p.name],
+    ['Injury:', p.injuryArea + ' - ' + p.diagnosis],
+    ['Brace Start Date:', p.braceStart],
+    ['Report Generated:', today.toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'})],
+    ['Note:', 'This is a prototype — all values below are simulated demo data, not from a real device.'],
+    [],
+  ].map(row => row.map(csvField).join(','));
+
+  const header = ['Date','Wear Time (hours)','Warning Alerts','Danger Alerts',
+    'Tibialis Anterior Activity (%)','Lateral Gastrocnemius Activity (%)','Fibularis Longus Activity (%)'].join(',');
+  const dataRows = [];
+  for(let i=0;i<dayCount;i++){
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const key = dateKey(d);
+    const log = peekDayLog(patientId, key);
+    const seed = pIdx*53.7 + i*7.91;
+    const wearHrs = (4 + seededRand(seed)*4).toFixed(1);
+    const emg1 = Math.round(18 + seededRand(seed+1)*25);
+    const emg2 = Math.round(22 + seededRand(seed+2)*28);
+    const emg3 = Math.round(15 + seededRand(seed+3)*25);
+    dataRows.push([key, wearHrs, log.warnCount, log.dangerCount, emg1, emg2, emg3].join(','));
+  }
+  return info.concat([header]).concat(dataRows).join('\r\n');
+}
+async function downloadPatientReport(patientId){
+  const p = Repository.patients.find(x => x.id === patientId);
+  const csv = generateReportCsv(patientId);
+  const base = 'ReGuard_' + p.name.replace(/\s+/g,'_') + '_Report';
+  const btn = document.getElementById('downloadReportBtn');
+  if(btn) btn.disabled = true;
+  try{
+    if(window.claude && window.claude.downloads){
+      try{
+        await window.claude.downloads.save({filename: base + '.csv', data: csv});
+        showToast('Report downloaded for ' + p.name);
+      }catch(err){
+        const code = err && err.code;
+        if(code === 'extension_not_enabled' || code === 'rejected_extension'){
+          try{
+            await window.claude.downloads.save({filename: base + '.txt', data: csv});
+            showToast('Saved as .txt — rename the extension to .csv to open in Excel');
+          }catch(err2){ fallbackBlobDownload(csv, base); }
+        } else if(code === 'declined'){
+          showToast('Download cancelled.');
+        } else if(code === 'rate_limited'){
+          showToast('A download prompt is already open — try again shortly.');
+        } else {
+          fallbackBlobDownload(csv, base);
+        }
+      }
+    } else {
+      fallbackBlobDownload(csv, base);
+    }
+  } finally {
+    if(btn) btn.disabled = false;
+  }
+}
+function fallbackBlobDownload(csv, base){
+  try{
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = base + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    showToast('Report downloaded.');
+  }catch(e){
+    showToast("Download isn't available in this preview.");
+  }
+}
+
+/* =========================================================
+   RENDER: Clinician Routine Editor
+   ========================================================= */
+let routineEditPatientId = 'p1';
+let pendingRoutine = {}; // exerciseId -> {selected, sets, reps}
+function goRoutineEditorFor(id){
+  routineEditPatientId = id;
+  go('routineEditor');
+}
+function renderRoutineEditor(){
+  const p = Repository.patients.find(x => x.id === routineEditPatientId);
+  document.getElementById('routinePatientName').textContent = p.name + "'s";
+  const current = Repository.routines[routineEditPatientId].exercises;
+  pendingRoutine = {};
+  EXERCISE_LIBRARY.forEach(ex => {
+    const existing = current.find(c => c.exerciseId === ex.id);
+    pendingRoutine[ex.id] = existing
+      ? {selected:true, sets:existing.sets, reps:existing.reps}
+      : {selected:false, sets:ex.defaultSets, reps:ex.defaultReps};
+  });
+  renderRoutinePickList();
+}
+function renderRoutinePickList(){
+  const rows = EXERCISE_LIBRARY.map(ex => {
+    const pr = pendingRoutine[ex.id];
+    const chName = CHANNEL_DEFS.find(c => c.id === ex.channel).name;
+    return `<div class="routine-pick-row">
+      <button class="toggle ${pr.selected?'on':''}" data-ex="${ex.id}" onclick="toggleRoutinePick(this)"><span class="knob"></span></button>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:13px; font-weight:800; color:var(--navy);">${ex.icon} ${ex.name}</div>
+        <div style="font-size:11px; color:var(--text2); margin-top:2px;">${chName}</div>
+      </div>
+      <div class="rp-num"><input type="number" min="1" max="10" value="${pr.sets}" data-ex="${ex.id}" data-kind="sets" onchange="onRoutineNumChange(this)" /></div>
+      <div class="rp-num"><input type="number" min="1" max="60" value="${pr.reps}" data-ex="${ex.id}" data-kind="reps" onchange="onRoutineNumChange(this)" /></div>
+    </div>`;
+  }).join('');
+  document.getElementById('routinePickList').innerHTML = `
+    <div class="row" style="gap:12px; padding-bottom:8px; border-bottom:1px solid var(--border); margin-bottom:2px;">
+      <div style="width:46px; flex:0 0 auto;"></div>
+      <div style="flex:1; font-size:10px; font-weight:800; color:var(--text2); text-transform:uppercase; letter-spacing:.03em;">Exercise</div>
+      <div class="rp-num" style="font-size:10px; font-weight:800; color:var(--text2); text-align:center; text-transform:uppercase;">Sets</div>
+      <div class="rp-num" style="font-size:10px; font-weight:800; color:var(--text2); text-align:center; text-transform:uppercase;">Reps</div>
+    </div>${rows}`;
+}
+function toggleRoutinePick(btn){
+  btn.classList.toggle('on');
+  pendingRoutine[btn.dataset.ex].selected = btn.classList.contains('on');
+}
+function onRoutineNumChange(el){
+  const val = Math.max(1, parseInt(el.value) || 1);
+  el.value = val;
+  pendingRoutine[el.dataset.ex][el.dataset.kind] = val;
+}
+function saveRoutine(){
+  const exercises = EXERCISE_LIBRARY.filter(ex => pendingRoutine[ex.id].selected)
+    .map(ex => ({exerciseId:ex.id, sets:pendingRoutine[ex.id].sets, reps:pendingRoutine[ex.id].reps}));
+  Repository.routines[routineEditPatientId].exercises = exercises;
+  showToast('Routine updated for ' + Repository.patients.find(p => p.id === routineEditPatientId).name);
+  go('patientDetail');
+}
+
+/* =========================================================
+   RENDER: Clinician Exercise Calendar
+   ========================================================= */
+let calPatientId = 'p1', calYear = 0, calMonth = 0, calSelectedKey = '';
+const CAL_DOW = ['S','M','T','W','T','F','S'];
+function goCalendarFor(id){
+  calPatientId = id;
+  const now = new Date();
+  calYear = now.getFullYear(); calMonth = now.getMonth();
+  calSelectedKey = todayKey();
+  go('patientCalendar');
+}
+function shiftCalMonth(delta){
+  calMonth += delta;
+  if(calMonth < 0){ calMonth = 11; calYear--; }
+  if(calMonth > 11){ calMonth = 0; calYear++; }
+  renderCalGrid();
+}
+function renderCalendarScreen(){
+  document.getElementById('calPatientName').textContent = Repository.patients.find(p => p.id === calPatientId).name;
+  renderCalGrid();
+}
+function renderCalGrid(){
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calMonthLabel').textContent = `${monthNames[calMonth]} ${calYear}`;
+  const firstWeekday = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const totalRoutine = Repository.routines[calPatientId].exercises.length;
+  const todayStr = todayKey();
+  let cells = CAL_DOW.map(d => `<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<firstWeekday;i++) cells += `<div class="cal-cell empty"></div>`;
+  for(let day=1; day<=daysInMonth; day++){
+    const key = dateKey(new Date(calYear, calMonth, day));
+    const isFuture = key > todayStr;
+    let dotClass = 'none', alertHtml = '';
+    if(!isFuture){
+      const log = getDayLog(calPatientId, key);
+      const doneN = log.doneIds.length;
+      dotClass = doneN === 0 ? 'none' : (doneN >= totalRoutine ? 'done' : 'partial');
+      const totalAlerts = log.warnCount + log.dangerCount;
+      if(totalAlerts > 0) alertHtml = `<span class="cd-alert${log.dangerCount===0?' warn-only':''}">${totalAlerts}</span>`;
+    }
+    const sel = key === calSelectedKey ? ' selected' : '';
+    cells += `<div class="cal-cell${sel}" onclick="selectCalDay('${key}')">
+      <span class="cd-num">${day}</span>
+      ${isFuture ? '' : `<span class="cd-dot ${dotClass}"></span>`}
+      ${alertHtml}
+    </div>`;
+  }
+  document.getElementById('calGrid').innerHTML = cells;
+  renderCalDayCard(calSelectedKey);
+}
+function selectCalDay(key){
+  calSelectedKey = key;
+  renderCalGrid();
+}
+function renderCalDayCard(key){
+  const todayStr = todayKey();
+  const dLabel = new Date(key + 'T00:00:00').toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
+  if(key > todayStr){
+    document.getElementById('calDayCard').innerHTML = `<div class="card sm">${emptyRow('No data yet for ' + dLabel + '.')}</div>`;
+    return;
+  }
+  const log = getDayLog(calPatientId, key);
+  const routine = Repository.routines[calPatientId].exercises;
+  const exRows = routine.map(r => {
+    const ex = findExercise(r.exerciseId);
+    const done = log.doneIds.includes(r.exerciseId);
+    return `<div class="row between" style="padding:6px 0;">
+      <span style="font-size:12.5px; color:var(--text);">${ex.icon} ${ex.name}</span>
+      <span style="font-size:12px; font-weight:800; color:${done?'var(--safe)':'var(--text3)'};">${done?'Completed':'Not done'}</span>
+    </div>`;
+  }).join('') || emptyRow('No routine assigned.');
+  document.getElementById('calDayCard').innerHTML = `
+    <div class="section-header" style="margin-top:0;"><h2>${dLabel}</h2></div>
+    <div class="card sm" style="margin-bottom:12px;">${exRows}</div>
+    <div class="summary-grid">
+      <div class="summary-card"><div class="val tabular" style="color:var(--warning);">${log.warnCount}</div><div class="lbl">Warning Alerts</div></div>
+      <div class="summary-card"><div class="val tabular" style="color:var(--danger);">${log.dangerCount}</div><div class="lbl">Danger Alerts</div></div>
+    </div>`;
 }
 
 /* =========================================================
@@ -1362,12 +2458,16 @@ function saveSettings(){
     s.channels[c.id].enabled = pc.enabled;
   });
   showToast('Settings saved for ' + Repository.patients.find(p=>p.id===id).name);
+  go('clinicianDashboard');
 }
-function showToast(msg){
+function showToast(msg, onClick){
   const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
+  t.textContent = msg;
+  t.classList.add('show');
+  t.style.cursor = onClick ? 'pointer' : '';
+  t.onclick = onClick ? () => { onClick(); t.classList.remove('show'); } : null;
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+  t._timer = setTimeout(() => t.classList.remove('show'), onClick ? 5000 : 2200);
 }
 
 /* =========================================================
@@ -1382,6 +2482,8 @@ setTheme(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').
 function tickClock(){
   const now = new Date();
   document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+  if(appState.role === 'patient') checkDailyReportSchedule();
 }
 tickClock(); setInterval(tickClock, 30000);
 </script>
+
