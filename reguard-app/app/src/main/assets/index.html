@@ -1330,13 +1330,30 @@ const EspEmgSource = {
     this.baseUrl = 'http://' + String(ip || '192.168.4.1').replace(/^https?:\/\//,'').replace(/\/+$/,'');
     this.since = 0;
     this.active = true;
+    // Zero out immediately, not just on a later failed/disconnected poll --
+    // otherwise whatever value FakeEmgDataSource.base last held (leftover
+    // simulated demo activity, or a stale real reading from before) would
+    // keep showing as "activity" for the whole window until the first
+    // successful fetch actually lands.
+    this._zeroBase();
     this._poll();
   },
   stop(){
+    const wasConnected = this.connected;
     this.active = false;
     clearTimeout(this.pollTimer);
     this.pollTimer = null;
-    if(this.connected){ this.connected = false; onEspConnectionChange(false); }
+    this.connected = false;
+    // No live connection to the brace means no real signal to show --
+    // freeze/zero the shared value instead of leaving it at its last
+    // reading, so nothing appears to be "active" while actually disconnected.
+    this._zeroBase();
+    if(wasConnected) onEspConnectionChange(false);
+  },
+  _zeroBase(){
+    FakeEmgDataSource.base.ch1 = 0;
+    FakeEmgDataSource.base.ch2 = 0;
+    FakeEmgDataSource.base.ch3 = 0;
   },
   async _poll(){
     try{
@@ -1356,7 +1373,11 @@ const EspEmgSource = {
       // requests to external hosts entirely, so this will always fail
       // there. It's expected to succeed once ported to the Android
       // WebView app on a phone actually joined to the brace's Wi-Fi.
-      if(this.connected){ this.connected = false; onEspConnectionChange(false); }
+      if(this.connected){
+        this.connected = false;
+        this._zeroBase(); // a dropped poll mid-session shouldn't leave the last reading looking "active"
+        onEspConnectionChange(false);
+      }
     }
     if(this.active) this.pollTimer = setTimeout(() => this._poll(), 40);
   },
@@ -1405,6 +1426,15 @@ function setEmgSource(mode){
     EspEmgSource.stop();
     const p = Repository.patients.find(x => x.id === 'p1');
     p.connection = 'connected'; // demo default, matches original prototype behavior
+    updateBraceChip();
+  } else {
+    // Switching to Real mode doesn't connect by itself (Connect is a
+    // separate step) -- zero out immediately so nothing shows as "active"
+    // from leftover simulated-mode activity until a real connection
+    // actually succeeds.
+    EspEmgSource._zeroBase();
+    const p = Repository.patients.find(x => x.id === 'p1');
+    p.connection = 'disconnected';
     updateBraceChip();
   }
 }
