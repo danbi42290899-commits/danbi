@@ -2704,7 +2704,9 @@ function setTheme(mode){
 function toggleTheme(){
   setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
 }
-setTheme(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+// Always start on the light theme regardless of system/browser dark-mode
+// preference — the user can still switch via the toggle on Patient Home.
+setTheme('light');
 function tickClock(){
   const now = new Date();
   document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
