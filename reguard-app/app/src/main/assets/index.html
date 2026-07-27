@@ -50,19 +50,6 @@ button{font-family:inherit;}
 
 /* ---------- lab chrome (outside the phone) ---------- */
 .lab{width:100%;max-width:1180px;display:flex;gap:28px;align-items:flex-start;justify-content:center;flex-wrap:wrap;}
-.lab-side{width:280px;flex:0 0 280px;padding-top:10px;}
-.lab-title{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);font-weight:700;margin:0 0 6px;}
-.lab-name{font-size:26px;font-weight:800;color:var(--navy);margin:0 0 4px;letter-spacing:-0.01em;}
-.lab-desc{font-size:13.5px;line-height:1.6;color:var(--text2);margin:0 0 20px;}
-.lab-block{background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:16px 18px;margin-bottom:14px;}
-.lab-block h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);font-weight:700;}
-.lab-block p, .lab-block li{font-size:13px;line-height:1.55;color:var(--text);margin:0;}
-.lab-block ul{margin:0;padding-left:18px;}
-.themeToggle{display:flex;gap:8px;margin-bottom:20px;}
-.themeToggle button{flex:1;padding:9px 0;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--card);color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer;}
-.themeToggle button.active{background:var(--navy);color:var(--bg);border-color:var(--navy);}
-.swatchRow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
-.swatch{width:26px;height:26px;border-radius:8px;border:1px solid var(--border);}
 
 /* ---------- phone frame ---------- */
 .phone-wrap{position:relative;}
@@ -342,6 +329,7 @@ body{display:block; padding:0;}
 .phone{width:100%; height:100dvh; border-radius:0; padding:0; box-shadow:none;}
 .phone-screen{border-radius:0;}
 .notch{display:none;}
+.statusbar{display:none;}
 </style>
 
 <div class="lab">
@@ -411,9 +399,12 @@ body{display:block; padding:0;}
           <!-- 4. PATIENT HOME -->
           <section class="screen" data-screen="patientHome">
             <div class="scroll-pad" style="padding-top:14px;">
-              <div class="row gap8" style="margin-bottom:10px; cursor:pointer; user-select:none;" onclick="onLogoTap()" title="Re:Guard">
-                <div class="app-logo-badge">🦶</div>
-                <span style="font-size:13px; font-weight:800; color:var(--navy); letter-spacing:.01em;">Re:Guard</span>
+              <div class="row between" style="margin-bottom:10px;">
+                <div class="row gap8" style="cursor:pointer; user-select:none;" onclick="onLogoTap()" title="Re:Guard">
+                  <div class="app-logo-badge">🦶</div>
+                  <span style="font-size:13px; font-weight:800; color:var(--navy); letter-spacing:.01em;">Re:Guard</span>
+                </div>
+                <button class="toggle" id="themeToggleSwitch" onclick="toggleTheme()" title="Dark mode" aria-label="Toggle dark mode"><span class="knob"></span></button>
               </div>
               <div style="margin-bottom:16px;">
                 <div style="font-size:13px; color:var(--text2); font-weight:600;" id="homeGreeting">Good afternoon,</div>
@@ -969,47 +960,6 @@ body{display:block; padding:0;}
     </div>
   </div>
 
-      <div class="lab-name">Re:Guard</div>
-    <p class="lab-desc">Rehabilitation monitoring prototype for a 3-channel EMG smart ankle brace. Not a medical diagnostic device — flags restricted or unintended muscle activity during brace wear.</p>
-
-    <div class="themeToggle">
-      <button id="themeLightBtn" onclick="setTheme('light')">Light</button>
-      <button id="themeDarkBtn" onclick="setTheme('dark')">Dark</button>
-    </div>
-
-    <div class="lab-block">
-      <h4>Try it</h4>
-      <ul>
-        <li>Tap a role card, then <b>Try Demo</b> to skip login.</li>
-        <li>Patient Home streams simulated EMG data continuously — watch it trigger a real alert.</li>
-        <li>As Clinician, open a patient card → <b>Edit Threshold Settings</b> to adjust alert rules.</li>
-      </ul>
-    </div>
-    <div class="lab-block">
-      <h4>Channels</h4>
-      <ul>
-        <li><b>EMG 1</b> Tibialis Anterior — dorsiflexion</li>
-        <li><b>EMG 2</b> Fibularis Longus — eversion / stabilization</li>
-        <li><b>EMG 3</b> Lateral Gastrocnemius — plantarflexion</li>
-      </ul>
-    </div>
-    <div class="lab-block">
-      <h4>Alert logic</h4>
-      <p>Low activity, or activity that doesn't last long enough, is ignored. Warning: one channel stays moderate long enough. Danger: one channel stays high long enough, or 2+ channels are active at once. Each threshold has a lower OFF edge than its ON edge (hysteresis), and a Release Duration debounces the drop back down, so status doesn't flicker near the line. Alert Sensitivity presets — Early Alert, Balanced, Sustained Activity Only — set the thresholds and durations in one click; Advanced Settings exposes per-channel thresholds and durations for fine-tuning.</p>
-    </div>
-    <div class="lab-block">
-      <h4>Palette</h4>
-      <div class="swatchRow">
-        <div class="swatch" style="background:#2878D0" title="Primary"></div>
-        <div class="swatch" style="background:#173A5E" title="Navy"></div>
-        <div class="swatch" style="background:#4CC9B0" title="Mint"></div>
-        <div class="swatch" style="background:#6E7FDB" title="EMG 3 indigo"></div>
-        <div class="swatch" style="background:#32B78D" title="Safe"></div>
-        <div class="swatch" style="background:#F2A93B" title="Warning"></div>
-        <div class="swatch" style="background:#E65F5C" title="Danger"></div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -1437,8 +1387,13 @@ function updateBraceChip(){
   const chip = document.getElementById('braceChip');
   if(!chip) return;
   const connected = p.connection === 'connected';
+  const isSimulated = appState.emgSource !== 'real';
   chip.className = 'chip ' + (connected ? 'connected' : 'disconnected');
-  chip.innerHTML = '<span class="dot"></span>' + (connected ? 'Brace Connected' : 'Brace Disconnected');
+  const label = connected ? 'Brace Connected' : 'Brace Disconnected';
+  // Simulated mode always shows a connected/active demo signal even with no
+  // real hardware nearby — label it clearly so it's never mistaken for a
+  // real reading (see Debug Mode > Brace Data Source to switch to Real).
+  chip.innerHTML = '<span class="dot"></span>' + label + (isSimulated ? ' (Demo)' : '');
 }
 function setEmgSource(mode){
   if(appState.emgSource === mode) return;
@@ -1690,12 +1645,18 @@ function renderMuscleChannelCard(id, val, ch, quality, status, detailed, activat
 
 function renderPatientHome(){
   const p = Repository.patients.find(x=>x.id==='p1');
-  document.getElementById('battChip').textContent = p.battery + '%';
-  document.getElementById('battTop').textContent = p.battery + '%';
+  const isReal = appState.emgSource === 'real';
+  // The ESP32 brace sketch has no battery-telemetry code path at all, so
+  // there is no real battery reading to show once actually connected —
+  // show the placeholder demo number only in Simulated mode, labeled, and
+  // "—" (no data) in Real mode rather than a number that looks live but isn't.
+  document.getElementById('battChip').textContent = isReal ? '— (no battery data)' : (p.battery + '% (Demo)');
+  document.getElementById('battTop').textContent = isReal ? '—' : (p.battery + '%');
   document.getElementById('sumWear').textContent = p.wearTime;
   document.getElementById('sumWarn').textContent = appState.todayAlertCounts.warning;
   document.getElementById('sumDanger').textContent = appState.todayAlertCounts.danger;
   document.getElementById('sumChannel').textContent = p.mostActive;
+  updateBraceChip();
   updateStatusHero(currentOverallStatus || 'safe');
   const s = Repository.thresholds['p1'];
   const html = CHANNEL_DEFS.map(c => renderMuscleChannelCard(c.id, FakeEmgDataSource.base[c.id]|0, s.channels[c.id], 90, 'safe', false)).join('');
@@ -2722,8 +2683,11 @@ function showToast(msg, onClick){
    ========================================================= */
 function setTheme(mode){
   document.documentElement.setAttribute('data-theme', mode);
-  document.getElementById('themeLightBtn')?.classList.toggle('active', mode==='light');
-  document.getElementById('themeDarkBtn')?.classList.toggle('active', mode==='dark');
+  const sw = document.getElementById('themeToggleSwitch');
+  if(sw) sw.classList.toggle('on', mode === 'dark');
+}
+function toggleTheme(){
+  setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
 }
 setTheme(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 function tickClock(){
