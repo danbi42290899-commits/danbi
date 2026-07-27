@@ -17,6 +17,14 @@ class MainActivity : AppCompatActivity() {
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
         webView.settings.mediaPlaybackRequiresUserGesture = false
+        // The app page loads from file:///android_asset/, a distinct origin
+        // from http://192.168.4.1 (the EMG brace's own Wi-Fi AP + web server).
+        // Without these, the brace-connection fetch() calls are blocked by
+        // the same-origin policy even with usesCleartextTraffic enabled.
+        @Suppress("DEPRECATION")
+        webView.settings.allowFileAccessFromFileURLs = true
+        @Suppress("DEPRECATION")
+        webView.settings.allowUniversalAccessFromFileURLs = true
         webView.loadUrl("file:///android_asset/index.html")
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

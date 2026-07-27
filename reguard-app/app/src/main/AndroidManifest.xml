@@ -10,6 +10,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Theme.ReGuard"
         android:forceDarkAllowed="false"
+        android:usesCleartextTraffic="true"
         android:supportsRtl="true">
 
         <activity
