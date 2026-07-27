@@ -1,17 +1,50 @@
 package com.reguard.app
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.ContentValues
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
+import android.util.Base64
+import android.webkit.JavascriptInterface
 import android.webkit.WebView
-import androidx.appcompat.app.AppCompatActivity
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
 
+    // Result is ignored either way: the CSV still saves to Downloads
+    // without notification permission, it just won't show the banner.
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        createDownloadNotificationChannel()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
 
         webView = findViewById(R.id.webView)
         webView.settings.javaScriptEnabled = true
@@ -25,6 +58,7 @@ class MainActivity : AppCompatActivity() {
         webView.settings.allowFileAccessFromFileURLs = true
         @Suppress("DEPRECATION")
         webView.settings.allowUniversalAccessFromFileURLs = true
+        webView.addJavascriptInterface(DownloadBridge(this), "AndroidDownloader")
         webView.loadUrl("file:///android_asset/index.html")
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -37,5 +71,109 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    private fun createDownloadNotificationChannel() {
+        val channel = NotificationChannel(
+            DOWNLOAD_CHANNEL_ID,
+            "Downloads",
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply { description = "Notifies when a Re:Guard patient report finishes downloading" }
+        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+    }
+
+    /** Called on a background (non-UI) thread by the WebView JS bridge. */
+    fun onCsvSaved(filename: String, uri: Uri) {
+        runOnUiThread {
+            val notification = buildDownloadNotification(filename, uri)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED
+            ) {
+                NotificationManagerCompat.from(this).notify(DOWNLOAD_NOTIFICATION_ID, notification)
+            }
+            Toast.makeText(this, "$filename saved to Downloads", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun onCsvSaveFailed(message: String) {
+        runOnUiThread { Toast.makeText(this, "Download failed: $message", Toast.LENGTH_LONG).show() }
+    }
+
+    private fun buildDownloadNotification(filename: String, uri: Uri) =
+        NotificationCompat.Builder(this, DOWNLOAD_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setContentTitle("Report downloaded")
+            .setContentText("$filename saved to Downloads — tap to open")
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .apply {
+                // Only content:// URIs (MediaStore, API 29+) can be safely
+                // handed to another app via ACTION_VIEW; a plain file:// URI
+                // on the legacy (<29) save path would throw
+                // FileUriExposedException, so skip the tap action there.
+                if (uri.scheme == "content") {
+                    val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(uri, "text/csv")
+                        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    }
+                    val pendingIntent = PendingIntent.getActivity(
+                        this@MainActivity, 0, viewIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                    setContentIntent(pendingIntent)
+                }
+            }
+            .build()
+
+    companion object {
+        private const val DOWNLOAD_CHANNEL_ID = "reguard_downloads"
+        private const val DOWNLOAD_NOTIFICATION_ID = 1001
+    }
+
+    // Bridges CSV report downloads from the WebView's JS to a real file in
+    // the device's Downloads folder, since neither the Claude Artifact
+    // `window.claude.downloads` capability (only injected by claude.ai
+    // around the published artifact, never present here) nor a plain
+    // Blob+<a download> click triggers an actual file save inside WebView.
+    private class DownloadBridge(private val activity: MainActivity) {
+        @JavascriptInterface
+        fun saveCsv(filename: String, base64Data: String) {
+            try {
+                val bytes = Base64.decode(base64Data, Base64.DEFAULT)
+                val uri = writeToDownloads(activity, filename, bytes)
+                activity.onCsvSaved(filename, uri)
+            } catch (e: Exception) {
+                activity.onCsvSaveFailed(e.message ?: e.javaClass.simpleName)
+            }
+        }
+
+        private fun writeToDownloads(context: Context, filename: String, bytes: ByteArray): Uri {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val values = ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                    put(MediaStore.MediaColumns.MIME_TYPE, "text/csv")
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                }
+                val resolver = context.contentResolver
+                val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                    ?: throw IllegalStateException("MediaStore insert failed")
+                resolver.openOutputStream(uri)?.use { it.write(bytes) }
+                    ?: throw IllegalStateException("Could not open output stream")
+                return uri
+            } else {
+                // Android 8-9 (API 26-28): no scoped storage yet. Writing
+                // here requires the legacy WRITE_EXTERNAL_STORAGE permission
+                // (declared in the manifest with maxSdkVersion=28) to already
+                // be granted; if it isn't, this throws and onCsvSaveFailed
+                // reports it rather than crashing the app.
+                @Suppress("DEPRECATION")
+                val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                if (!dir.exists()) dir.mkdirs()
+                val file = File(dir, filename)
+                file.writeBytes(bytes)
+                return Uri.fromFile(file)
+            }
+        }
     }
 }

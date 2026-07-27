@@ -2360,7 +2360,22 @@ async function downloadPatientReport(patientId){
   const btn = document.getElementById('downloadReportBtn');
   if(btn) btn.disabled = true;
   try{
-    if(window.claude && window.claude.downloads){
+    if(window.AndroidDownloader && window.AndroidDownloader.saveCsv){
+      // Installed Android app: window.claude.downloads doesn't exist there
+      // (it's only injected by claude.ai around the published artifact),
+      // and a plain Blob+<a download> click doesn't trigger a real file
+      // save inside WebView either. Hand the CSV to the native bridge,
+      // which writes it into the device's real Downloads folder via
+      // MediaStore and fires a system notification once the write
+      // finishes (see MainActivity.kt's DownloadBridge).
+      try{
+        const b64 = btoa(unescape(encodeURIComponent(csv)));
+        window.AndroidDownloader.saveCsv(base + '.csv', b64);
+        showToast('Downloading report for ' + p.name + '…');
+      }catch(err){
+        fallbackBlobDownload(csv, base);
+      }
+    } else if(window.claude && window.claude.downloads){
       try{
         await window.claude.downloads.save({filename: base + '.csv', data: csv});
         showToast('Report downloaded for ' + p.name);
