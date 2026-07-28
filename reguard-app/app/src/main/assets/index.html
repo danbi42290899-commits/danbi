@@ -419,6 +419,19 @@ body{display:block; padding:0;}
                 </div>
                 <button class="toggle" id="themeToggleSwitch" onclick="toggleTheme()" title="Dark mode" aria-label="Toggle dark mode"><span class="knob"></span></button>
               </div>
+
+              <div class="card sm stack" id="braceConnectBanner" style="gap:10px; margin-bottom:16px;">
+                <div style="font-size:13px; font-weight:800; color:var(--navy);">Connect to Brace</div>
+                <div>
+                  <label class="field-label">Brace IP Address</label>
+                  <input type="text" id="espIpInput" value="192.168.4.1" placeholder="192.168.4.1" />
+                </div>
+                <button class="btn-outline" id="espConnectBtn" onclick="toggleEspConnection()">Connect</button>
+                <div style="font-size:11px; color:var(--text3); line-height:1.6;">
+                  Join the brace's own Wi-Fi first (Settings → Wi-Fi): <b>Vsera_Colab_pray_D1</b>, then tap Connect.
+                </div>
+              </div>
+
               <div style="margin-bottom:16px;">
                 <div style="font-size:13px; color:var(--text2); font-weight:600;" id="homeGreeting">Good afternoon,</div>
                 <div style="font-size:21px; font-weight:800; color:var(--navy);" id="homeUserName">Emily</div>
@@ -470,25 +483,18 @@ body{display:block; padding:0;}
               <button class="back" onclick="exitDebugMode()">✕</button>
             </div>
             <div class="scroll-pad">
-              <div class="section-header" style="margin-top:0;"><h2>Brace Connection</h2></div>
+              <div class="section-header" style="margin-top:0;"><h2>Signal Scaling</h2></div>
               <div id="realSourcePanel">
                 <div class="card sm stack" style="gap:10px; margin-bottom:14px;">
                   <div>
-                    <label class="field-label">Brace IP Address</label>
-                    <input type="text" id="espIpInput" value="192.168.4.1" placeholder="192.168.4.1" />
-                  </div>
-                  <div>
                     <label class="field-label">Max Reference Signal (mV ≈ 100%)</label>
                     <input type="text" id="espMaxMvInput" value="10" placeholder="10" />
-                    <div style="font-size:10.5px; color:var(--text3); margin-top:4px; line-height:1.5;">Scales the brace's <b>filtered</b> signal (20–450 Hz band-pass, 60 Hz notch) onto this app's 0–100% activation display. The default of <b>10 mV</b> comes from this project's own reference recordings, where resting muscle sits near 7–8% and the strongest contraction reaches full scale. It still depends on your ADC gain and electrode placement — connect, watch the waveform below, then adjust so a hard contraction reads near 100%.</div>
-                  </div>
-                  <button class="btn-outline" id="espConnectBtn" onclick="toggleEspConnection()">Connect</button>
-                  <div style="font-size:11px; color:var(--text3); line-height:1.6;">
-                    1. On your phone, join the brace's own Wi-Fi network first (Settings → Wi-Fi): <b>Vsera_Colab_pray_D1</b>.<br/>
-                    2. Come back here and tap Connect — the app pulls live samples from the address above (default <b>192.168.4.1</b>).<br/>
-                    3. Once connected, this screen and the rest of the app (muscle bars, alerts, calibration) read the live signal from the brace.
+                    <div style="font-size:10.5px; color:var(--text3); margin-top:4px; line-height:1.5;">Scales the brace's <b>filtered</b> signal (20–450 Hz band-pass, 60 Hz notch) onto this app's 0–100% activation display. The default of <b>10 mV</b> comes from this project's own reference recordings, where resting muscle sits near 7–8% and the strongest contraction reaches full scale. It still depends on your ADC gain and electrode placement — connect from Home, watch the waveform below, then adjust so a hard contraction reads near 100%.</div>
                   </div>
                 </div>
+              </div>
+              <div style="font-size:11px; color:var(--text3); line-height:1.6; margin:-4px 0 14px;">
+                Connect/disconnect from the brace is now on the Home screen — this screen just tunes the signal once you're connected.
               </div>
 
               <div class="row gap8" style="margin-bottom:16px;">
@@ -2172,6 +2178,7 @@ function renderPatientHome(){
   document.getElementById('sumDanger').textContent = appState.todayAlertCounts.danger;
   document.getElementById('sumChannel').textContent = p.mostActive;
   updateBraceChip();
+  syncEmgSourceUI(); // Connect button now lives on this screen; keep its label/state in sync on every render
   updateStatusHero(currentOverallStatus || 'safe');
   const s = Repository.thresholds['p1'];
   // Real link health when connected to a brace; a labelled demo constant otherwise.
