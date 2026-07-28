@@ -484,12 +484,9 @@ body{display:block; padding:0;}
                   </div>
                 </div>
               </div>
-              <div style="font-size:11px; color:var(--text3); line-height:1.6; margin:-4px 0 14px;">
-                Connect/disconnect from the brace is now on the Home screen — this screen just tunes the signal once you're connected.
-              </div>
-
-              <div class="row gap8" style="margin-bottom:16px;">
+              <div class="row between" style="margin-bottom:16px;">
                 <span class="chip" id="debugConnChip"><span class="dot"></span>—</span>
+                <button class="btn-outline" id="debugConnectBtn" onclick="toggleEspConnection()" style="width:auto; height:34px; padding:0 14px; font-size:12px; flex:0 0 auto;">Connect</button>
               </div>
 
               <div id="calibrationIdlePanel">
@@ -1866,14 +1863,19 @@ const EspEmgSource = {
     return Math.round(100 * rate * (1 - Math.min(1, railFrac)));
   },
 };
+function syncConnectButtons(){
+  const active = EspEmgSource.active;
+  ['espConnectBtn', 'debugConnectBtn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if(!btn) return;
+    btn.textContent = active ? 'Disconnect' : 'Connect';
+    btn.classList.toggle('btn-danger-outline', active);
+  });
+}
 function onEspConnectionChange(connected){
   const p = Repository.patients.find(x => x.id === 'p1');
   p.connection = connected ? 'connected' : 'disconnected';
-  const btn = document.getElementById('espConnectBtn');
-  if(btn){
-    btn.textContent = connected ? 'Disconnect' : 'Connect';
-    btn.classList.toggle('btn-danger-outline', connected);
-  }
+  syncConnectButtons();
   updateBraceChip();
   // Connect now happens from the Home banner itself, so if you're already
   // sitting on Home when it connects/disconnects, the summary cards (wear
@@ -1961,11 +1963,7 @@ function syncEmgSourceUI(){
   document.getElementById('srcSimBtn')?.classList.toggle('active', mode === 'simulated');
   document.getElementById('srcRealBtn')?.classList.toggle('active', mode === 'real');
   const rsp = document.getElementById('realSourcePanel'); if(rsp) rsp.style.display = 'block';
-  const btn = document.getElementById('espConnectBtn');
-  if(btn){
-    btn.textContent = EspEmgSource.active ? 'Disconnect' : 'Connect';
-    btn.classList.toggle('btn-danger-outline', EspEmgSource.active);
-  }
+  syncConnectButtons();
 }
 
 /* =========================================================
