@@ -607,12 +607,12 @@ body{display:block; padding:0;}
               <div class="card sm stack" style="gap:12px;">
                 <div class="row between">
                   <span style="font-size:13px; color:var(--text2);">Brace Connection</span>
-                  <span class="chip connected"><span class="dot"></span>Connected</span>
+                  <span class="chip" id="profileConnChip"><span class="dot"></span>—</span>
                 </div>
                 <div class="divider" style="margin:0;"></div>
                 <div class="row between">
                   <span style="font-size:13px; color:var(--text2);">Battery Level</span>
-                  <span style="font-size:13px; font-weight:700;">82%</span>
+                  <span style="font-size:13px; font-weight:700;" id="profileBattery">—</span>
                 </div>
                 <div class="divider" style="margin:0;"></div>
                 <div class="row between">
@@ -1144,7 +1144,7 @@ function youtubeIdFromUrl(url){
 
 const Repository = {
   patients: [
-    {id:'p1', name:'Emily Carter', injuryArea:'Right Ankle', diagnosis:'Grade II Ankle Sprain', braceStart:'Jul 10, 2026', clinician:'Dr. Sarah Kim', connection:'connected', battery:82, status:'safe', wearTime:'6h 42m', warnCount:3, dangerCount:1, mostActive:'Lateral Gastrocnemius'},
+    {id:'p1', name:'Emily Carter', injuryArea:'Right Ankle', diagnosis:'Grade II Ankle Sprain', braceStart:'Jul 10, 2026', clinician:'Dr. Sarah Kim', connection:'disconnected', battery:82, status:'safe', wearTime:'6h 42m', warnCount:3, dangerCount:1, mostActive:'Lateral Gastrocnemius'},
     {id:'p2', name:'Daniel Brooks', injuryArea:'Left Ankle', diagnosis:'Post-Fracture Cast Alternative', braceStart:'Jun 28, 2026', clinician:'Dr. Sarah Kim', connection:'connected', battery:54, status:'warning', wearTime:'5h 10m', warnCount:6, dangerCount:2, mostActive:'Fibularis Longus'},
     {id:'p3', name:'Olivia Chen', injuryArea:'Right Ankle', diagnosis:'Lateral Ligament Repair (Post-op)', braceStart:'Jul 18, 2026', clinician:'Dr. Sarah Kim', connection:'connected', battery:91, status:'danger', wearTime:'3h 55m', warnCount:9, dangerCount:4, mostActive:'Tibialis Anterior'},
     {id:'p4', name:'Marcus Lee', injuryArea:'Left Ankle', diagnosis:'Grade I Ankle Sprain', braceStart:'Jul 20, 2026', clinician:'Dr. Sarah Kim', connection:'disconnected', battery:15, status:'warning', wearTime:'1h 20m', warnCount:2, dangerCount:0, mostActive:'Lateral Gastrocnemius'},
@@ -1884,19 +1884,50 @@ function onEspConnectionChange(connected){
     btn.classList.toggle('btn-danger-outline', connected);
   }
   updateBraceChip();
+  // Connect now happens from the Home banner itself, so if you're already
+  // sitting on Home when it connects/disconnects, the summary cards (wear
+  // time, most-active channel) need a live refresh too, not just on the
+  // next navigation away and back.
+  if(appState.screen === 'patientHome') renderPatientHome();
 }
 function updateBraceChip(){
   const p = Repository.patients.find(x => x.id === 'p1');
-  const chip = document.getElementById('braceChip');
-  if(!chip) return;
   const connected = p.connection === 'connected';
   const isSimulated = appState.emgSource !== 'real';
-  chip.className = 'chip ' + (connected ? 'connected' : 'disconnected');
-  const label = connected ? 'Brace Connected' : 'Brace Disconnected';
   // Simulated mode always shows a connected/active demo signal even with no
   // real hardware nearby — label it clearly so it's never mistaken for a
-  // real reading (see Debug Mode > Brace Data Source to switch to Real).
-  chip.innerHTML = '<span class="dot"></span>' + label + (isSimulated ? ' (Demo)' : '');
+  // real reading. (In practice emgSource is always 'real' now that the
+  // Simulated toggle was removed, so this suffix never actually shows —
+  // kept in case that toggle ever comes back.)
+  const demoSuffix = isSimulated ? ' (Demo)' : '';
+  const battery = isSimulated ? (p.battery + '% (Demo)') : '— (no battery data)';
+
+  const chip = document.getElementById('braceChip');
+  if(chip){
+    chip.className = 'chip ' + (connected ? 'connected' : 'disconnected');
+    chip.innerHTML = '<span class="dot"></span>' + (connected ? 'Brace Connected' : 'Brace Disconnected') + demoSuffix;
+  }
+  // Profile > Device card shows the same connection/battery facts in its
+  // own format — keep it in sync from the same single source of truth
+  // instead of a separate hardcoded "Connected" / "82%" that never updated.
+  const profChip = document.getElementById('profileConnChip');
+  if(profChip){
+    profChip.className = 'chip ' + (connected ? 'connected' : 'disconnected');
+    profChip.innerHTML = '<span class="dot"></span>' + (connected ? 'Connected' : 'Disconnected') + demoSuffix;
+  }
+  const profBatt = document.getElementById('profileBattery');
+  if(profBatt) profBatt.textContent = battery;
+}
+// Wear Time / Most Active Channel have no real tracking behind them yet —
+// they're static demo constants on Repository.patients, not derived from
+// an actual worn session. Showing them while genuinely disconnected (i.e.
+// not currently worn) implied usage that hasn't happened; show "no data"
+// there instead, same idea as the battery/brace-chip treatment above.
+function todayWearTimeText(p){
+  return p.connection === 'connected' ? p.wearTime : '—';
+}
+function todayMostActiveText(p){
+  return p.connection === 'connected' ? p.mostActive : 'No data yet';
 }
 function setEmgSource(mode){
   if(appState.emgSource === mode) return;
@@ -1951,7 +1982,10 @@ const appState = {
   role:null, screen:'splash', patientTab:'home', clinicianTab:'dashboard',
   historyRange:'today', patientFilter:'all',
   currentPatientId:'p1', settingsPatientId:'p1',
-  todayAlertCounts:{warning:3, danger:1},
+  // Starts at 0: with the Simulated demo mode removed, every alert shown
+  // here is a real one triggered by EmgAlertEvaluator during an actual
+  // connected session — there's nothing to pre-seed anymore.
+  todayAlertCounts:{warning:0, danger:0},
   dailyReportTime:'20:00', dailyReportDeliveredDate:null,
   userName:'',
   emgSource:'real', espMaxMv:DEFAULT_ESP_MAX_MV,
@@ -1970,7 +2004,7 @@ function go(screen){
   if(screen === 'dailyReport') renderDailyReport();
   if(screen === 'debugMode') renderDebugMode();
   if(screen === 'patientList') renderPatientList();
-  if(screen === 'patientProfile') renderDailyReportTimePicker();
+  if(screen === 'patientProfile'){ renderDailyReportTimePicker(); updateBraceChip(); }
   if(screen === 'clinicianSettings') { document.getElementById('settingsPatientSelect').value = appState.settingsPatientId; loadSettingsForm(); }
   if(screen === 'routineEditor') renderRoutineEditor();
   if(screen === 'patientCalendar') renderCalendarScreen();
@@ -2173,10 +2207,10 @@ function renderPatientHome(){
   // "—" (no data) in Real mode rather than a number that looks live but isn't.
   document.getElementById('battChip').textContent = isReal ? '— (no battery data)' : (p.battery + '% (Demo)');
   document.getElementById('battTop').textContent = isReal ? '—' : (p.battery + '%');
-  document.getElementById('sumWear').textContent = p.wearTime;
+  document.getElementById('sumWear').textContent = todayWearTimeText(p);
   document.getElementById('sumWarn').textContent = appState.todayAlertCounts.warning;
   document.getElementById('sumDanger').textContent = appState.todayAlertCounts.danger;
-  document.getElementById('sumChannel').textContent = p.mostActive;
+  document.getElementById('sumChannel').textContent = todayMostActiveText(p);
   updateBraceChip();
   syncEmgSourceUI(); // Connect button now lives on this screen; keep its label/state in sync on every render
   updateStatusHero(currentOverallStatus || 'safe');
@@ -2757,10 +2791,10 @@ function setHistRange(range){
 function renderHistory(){
   const p = Repository.patients.find(x=>x.id==='p1');
   const isWeek = appState.historyRange === 'week';
-  document.getElementById('histWear').textContent = isWeek ? '38h 20m' : p.wearTime;
+  document.getElementById('histWear').textContent = isWeek ? '38h 20m' : todayWearTimeText(p);
   document.getElementById('histWarn').textContent = isWeek ? Repository.weeklyTrend.reduce((a,b)=>a+b,0) : appState.todayAlertCounts.warning;
   document.getElementById('histDanger').textContent = isWeek ? 5 : appState.todayAlertCounts.danger;
-  document.getElementById('histChannel').textContent = p.mostActive;
+  document.getElementById('histChannel').textContent = isWeek ? p.mostActive : todayMostActiveText(p);
   document.getElementById('trendTitle').textContent = isWeek ? 'Weekly Alert Trend' : "Today's Alert Trend";
   const values = isWeek ? Repository.weeklyTrend : [0,1,0,2,1,3,1,1];
   const labels = isWeek ? Repository.weekLabels : ['8a','10a','12p','2p','4p','6p','8p','Now'];
