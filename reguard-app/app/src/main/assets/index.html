@@ -2268,8 +2268,18 @@ function startLiveMonitoring(){
       /* Debug Mode is the screen for reading the raw waveform and running
          calibration; a full-screen alert modal covering it every few seconds
          makes that impossible. Alerts are still evaluated, counted and
-         logged here — only the blocking modal is held back. */
-      if(appState.screen !== 'debugMode') triggerAlert(result.overall, result.cause, evaluator.state);
+         logged here — only the blocking modal is held back.
+
+         Dismissing the modal also starts a snooze window: a noisy signal
+         (e.g. an electrode with a marginal contact) can dip below the
+         Release threshold for just an instant and then cross back over,
+         which the evaluator correctly treats as a brand new episode --
+         without a snooze, that reopens the blocking modal again seconds
+         after it was just closed, over and over. The episode is still
+         recorded (counts/history stay accurate) during the snooze; only
+         the interrupting modal is held back. */
+      const snoozed = Date.now() < alertSnoozeUntil;
+      if(appState.screen !== 'debugMode' && !snoozed) triggerAlert(result.overall, result.cause, evaluator.state);
       else recordAlert(result.overall, result.cause, evaluator.state);
     }
     if(result.overall === 'safe') alertShownForThisEpisode = false;
@@ -2280,6 +2290,8 @@ function stopLiveMonitoring(){
   monitoringTimer = null;
 }
 let alertShownForThisEpisode = false;
+let alertSnoozeUntil = 0;
+const ALERT_SNOOZE_MS = 60000; // how long a dismiss silences new modals for
 /* Bookkeeping half of an alert: history entry, today's counters, calendar
    log. Split out from triggerAlert() so an alert can be recorded without
    throwing a modal over the screen (see the Debug Mode case above). */
@@ -2314,7 +2326,10 @@ function triggerAlert(severity, cause, chState){
     }catch(e){}
   }
 }
-function closeAlert(){ document.getElementById('alertOverlay').classList.remove('show'); }
+function closeAlert(){
+  document.getElementById('alertOverlay').classList.remove('show');
+  alertSnoozeUntil = Date.now() + ALERT_SNOOZE_MS;
+}
 function viewAlertDetails(){ closeAlert(); go('patientHistory'); }
 
 /* =========================================================
