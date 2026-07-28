@@ -420,21 +420,12 @@ body{display:block; padding:0;}
                 <button class="toggle" id="themeToggleSwitch" onclick="toggleTheme()" title="Dark mode" aria-label="Toggle dark mode"><span class="knob"></span></button>
               </div>
 
-              <div class="card sm stack" id="braceConnectBanner" style="gap:10px; margin-bottom:16px;">
-                <div style="font-size:13px; font-weight:800; color:var(--navy);">Connect to Brace</div>
+              <div class="row between" style="margin-bottom:16px; align-items:center;">
                 <div>
-                  <label class="field-label">Brace IP Address</label>
-                  <input type="text" id="espIpInput" value="192.168.4.1" placeholder="192.168.4.1" />
+                  <div style="font-size:13px; color:var(--text2); font-weight:600;" id="homeGreeting">Good afternoon,</div>
+                  <div style="font-size:21px; font-weight:800; color:var(--navy);" id="homeUserName">Emily</div>
                 </div>
-                <button class="btn-outline" id="espConnectBtn" onclick="toggleEspConnection()">Connect</button>
-                <div style="font-size:11px; color:var(--text3); line-height:1.6;">
-                  Join the brace's own Wi-Fi first (Settings → Wi-Fi): <b>Vsera_Colab_pray_D1</b>, then tap Connect.
-                </div>
-              </div>
-
-              <div style="margin-bottom:16px;">
-                <div style="font-size:13px; color:var(--text2); font-weight:600;" id="homeGreeting">Good afternoon,</div>
-                <div style="font-size:21px; font-weight:800; color:var(--navy);" id="homeUserName">Emily</div>
+                <button class="btn-outline" id="espConnectBtn" onclick="toggleEspConnection()" style="width:auto; height:38px; padding:0 18px; font-size:12.5px; flex:0 0 auto;">Connect</button>
               </div>
               <div class="row gap8" style="margin-bottom:18px; flex-wrap:wrap;">
                 <span class="chip connected" id="braceChip"><span class="dot"></span>Brace Connected</span>
@@ -1151,11 +1142,11 @@ const Repository = {
     {id:'p5', name:'Sophia Turner', injuryArea:'Right Ankle', diagnosis:'Achilles Tendon Protection', braceStart:'Jul 5, 2026', clinician:'Dr. Sarah Kim', connection:'connected', battery:67, status:'safe', wearTime:'7h 05m', warnCount:1, dangerCount:0, mostActive:'Lateral Gastrocnemius'},
   ],
   alerts: {
-    p1: [
-      {time:'2:32 PM', channel:'Lateral Gastrocnemius', severity:'warning', durationSec:0.8},
-      {time:'11:17 AM', channel:'Multi-muscle Activation', severity:'danger', durationSec:1.6},
-      {time:'9:05 AM', channel:'Tibialis Anterior', severity:'warning', durationSec:0.6},
-    ],
+    // p1 (the real device/patient this app is used with) starts empty --
+    // matches todayAlertCounts starting at {0,0}. triggerAlert() unshifts
+    // real entries here as real alerts fire; the other patients below stay
+    // seeded since they're purely clinician-dashboard demo data.
+    p1: [],
     p2: [
       {time:'4:02 PM', channel:'Fibularis Longus', severity:'danger', durationSec:1.7},
       {time:'1:40 PM', channel:'Fibularis Longus', severity:'warning', durationSec:0.9},
@@ -1958,10 +1949,12 @@ function setEmgSource(mode){
 }
 function toggleEspConnection(){
   if(EspEmgSource.active){ EspEmgSource.stop(); return; }
-  const ip = (document.getElementById('espIpInput').value || '192.168.4.1').trim();
-  const maxMv = parseFloat(document.getElementById('espMaxMvInput').value);
+  // The brace's Wi-Fi AP always hands out 192.168.4.1 as its own address
+  // (ESP32 softAP default) -- no reason to make the user type it in.
+  const maxMvInput = document.getElementById('espMaxMvInput');
+  const maxMv = maxMvInput ? parseFloat(maxMvInput.value) : NaN;
   appState.espMaxMv = (isFinite(maxMv) && maxMv > 0) ? maxMv : DEFAULT_ESP_MAX_MV;
-  EspEmgSource.start(ip);
+  EspEmgSource.start('192.168.4.1');
 }
 function syncEmgSourceUI(){
   const mode = appState.emgSource || 'real';
@@ -2791,10 +2784,13 @@ function setHistRange(range){
 function renderHistory(){
   const p = Repository.patients.find(x=>x.id==='p1');
   const isWeek = appState.historyRange === 'week';
-  document.getElementById('histWear').textContent = isWeek ? '38h 20m' : todayWearTimeText(p);
-  document.getElementById('histWarn').textContent = isWeek ? Repository.weeklyTrend.reduce((a,b)=>a+b,0) : appState.todayAlertCounts.warning;
-  document.getElementById('histDanger').textContent = isWeek ? 5 : appState.todayAlertCounts.danger;
-  document.getElementById('histChannel').textContent = isWeek ? p.mostActive : todayMostActiveText(p);
+  // "This Week" has no real backing data either -- there's no persistence
+  // across days/sessions in this prototype, so a past week can never be
+  // more real than "today" is. Same honest placeholders both tabs.
+  document.getElementById('histWear').textContent = isWeek ? '—' : todayWearTimeText(p);
+  document.getElementById('histWarn').textContent = isWeek ? '—' : appState.todayAlertCounts.warning;
+  document.getElementById('histDanger').textContent = isWeek ? '—' : appState.todayAlertCounts.danger;
+  document.getElementById('histChannel').textContent = isWeek ? 'No data yet' : todayMostActiveText(p);
   document.getElementById('trendTitle').textContent = isWeek ? 'Weekly Alert Trend' : "Today's Alert Trend";
   const values = isWeek ? Repository.weeklyTrend : [0,1,0,2,1,3,1,1];
   const labels = isWeek ? Repository.weekLabels : ['8a','10a','12p','2p','4p','6p','8p','Now'];
