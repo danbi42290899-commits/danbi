@@ -23,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import org.json.JSONObject
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
@@ -33,6 +34,17 @@ class MainActivity : AppCompatActivity() {
     // without notification permission, it just won't show the banner.
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    // Whether the WebView's JS last reported an active brace connection
+    // (see AlertBridge.setConnected). Read at onStop() to decide whether
+    // background monitoring is worth starting at all.
+    @Volatile private var espConnected = false
+    // True only while EmgMonitorService is running *because this Activity
+    // paused the WebView's own connection for it* -- deliberately separate
+    // from espConnected, which flips to false the instant we pause the JS
+    // side and would otherwise make onStart() unable to tell "was this
+    // backgrounded while connected" from "was never connected at all".
+    private var backgroundMonitorActive = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +71,7 @@ class MainActivity : AppCompatActivity() {
         @Suppress("DEPRECATION")
         webView.settings.allowUniversalAccessFromFileURLs = true
         webView.addJavascriptInterface(DownloadBridge(this), "AndroidDownloader")
+        webView.addJavascriptInterface(AlertBridge(this), "AndroidAlerts")
         webView.loadUrl("file:///android_asset/index.html")
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -71,6 +84,35 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    // Hands monitoring off to EmgMonitorService the moment the app stops
+    // being visible, if a brace connection was actually active -- WebView
+    // JS timers/sockets are throttled once the Activity isn't in the
+    // foreground regardless of process lifetime, so leaving it to keep
+    // running wouldn't work. Pausing the WebView's own connection avoids
+    // two simultaneous WebSocket clients hitting the brace at once (unclear
+    // whether its firmware even supports that).
+    override fun onStop() {
+        super.onStop()
+        if (espConnected && !backgroundMonitorActive) {
+            backgroundMonitorActive = true
+            webView.evaluateJavascript(
+                "if(typeof EspEmgSource!=='undefined' && EspEmgSource.active) EspEmgSource.stop();", null
+            )
+            ContextCompat.startForegroundService(this, Intent(this, EmgMonitorService::class.java))
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (backgroundMonitorActive) {
+            backgroundMonitorActive = false
+            stopService(Intent(this, EmgMonitorService::class.java))
+            webView.evaluateJavascript(
+                "if(typeof toggleEspConnection==='function' && !EspEmgSource.active) toggleEspConnection();", null
+            )
+        }
     }
 
     private fun createDownloadNotificationChannel() {
@@ -173,6 +215,35 @@ class MainActivity : AppCompatActivity() {
                 val file = File(dir, filename)
                 file.writeBytes(bytes)
                 return Uri.fromFile(file)
+            }
+        }
+    }
+
+    // Bridges the in-app alert config (calibrated Danger thresholds + how
+    // long to hold above them) from JS into SharedPreferences, and tracks
+    // live connection state -- both consumed by EmgMonitorService, which
+    // cannot reach into the WebView's JS state directly since it runs
+    // independently once the app is backgrounded. See onStop()/onStart().
+    private class AlertBridge(private val activity: MainActivity) {
+        @JavascriptInterface
+        fun setConnected(connected: Boolean) {
+            activity.espConnected = connected
+        }
+
+        @JavascriptInterface
+        fun updateConfig(json: String) {
+            try {
+                val obj = JSONObject(json)
+                val prefs = activity.getSharedPreferences(EmgMonitorService.PREFS_NAME, MODE_PRIVATE)
+                prefs.edit()
+                    .putLong(EmgMonitorService.KEY_DURATION, obj.optLong("dangerDurationMs", 500L))
+                    .putLong(EmgMonitorService.KEY_CH1, java.lang.Double.doubleToLongBits(obj.optDouble("ch1DangerMv", -1.0)))
+                    .putLong(EmgMonitorService.KEY_CH2, java.lang.Double.doubleToLongBits(obj.optDouble("ch2DangerMv", -1.0)))
+                    .putLong(EmgMonitorService.KEY_CH3, java.lang.Double.doubleToLongBits(obj.optDouble("ch3DangerMv", -1.0)))
+                    .apply()
+            } catch (e: Exception) {
+                // Malformed config from JS -- leave whatever was previously
+                // stored in place rather than wiping it out.
             }
         }
     }

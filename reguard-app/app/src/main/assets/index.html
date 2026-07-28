@@ -1882,6 +1882,36 @@ function onEspConnectionChange(connected){
   // time, most-active channel) need a live refresh too, not just on the
   // next navigation away and back.
   if(appState.screen === 'patientHome') renderPatientHome();
+  // Tell the native side whether it should take over monitoring once the
+  // app is backgrounded, and hand it fresh thresholds now while we're sure
+  // WebView JS is actually running (no guarantee it'll get to run again
+  // before MainActivity.onStop() fires).
+  if(window.AndroidAlerts){
+    try{ window.AndroidAlerts.setConnected(connected); }catch(e){}
+    if(connected) syncNativeAlertConfig();
+  }
+}
+/* Hands the native background-monitoring service (see EmgMonitorService.kt)
+   a plain-mV Danger threshold per channel plus the duration to hold above
+   it, so it can watch for danger conditions itself once the app is no
+   longer in the foreground (WebView JS timers/sockets are throttled the
+   moment the Activity isn't visible, regardless of process lifetime -- see
+   MainActivity.onStop()/onStart()). Deliberately simpler than the in-app
+   evaluator: single Danger-only threshold per channel, no Warning tier, no
+   hysteresis release edge, no multi-channel-simultaneous rule -- catches
+   the situations that actually matter for a background safety alert
+   without duplicating the full state machine natively. */
+function syncNativeAlertConfig(){
+  if(!window.AndroidAlerts || !window.AndroidAlerts.updateConfig) return;
+  const s = Repository.thresholds['p1'];
+  if(!s) return;
+  const maxMv = Math.max(0.001, appState.espMaxMv || DEFAULT_ESP_MAX_MV);
+  const mvFor = id => s.channels[id].enabled ? +(s.channels[id].dangerOn/100*maxMv).toFixed(4) : -1;
+  const cfg = {
+    dangerDurationMs: s.dangerDurationMs,
+    ch1DangerMv: mvFor('ch1'), ch2DangerMv: mvFor('ch2'), ch3DangerMv: mvFor('ch3'),
+  };
+  try{ window.AndroidAlerts.updateConfig(JSON.stringify(cfg)); }catch(e){}
 }
 function updateBraceChip(){
   const p = Repository.patients.find(x => x.id === 'p1');
@@ -2723,6 +2753,7 @@ function finishCalibration(forcedResult){
   } else {
     Repository.calibration.p1 = {ch1:resultsByChannel.ch1, ch2:resultsByChannel.ch2, ch3:resultsByChannel.ch3, calibratedAt:Date.now()};
     applyCalibrationToThresholds('p1');
+    syncNativeAlertConfig();
     // The same 20s at-rest, on-skin window is also the correct place to learn
     // the Clean View noise profile (see captureCleanNoiseFromCalibration).
     captureCleanNoiseFromCalibration();
@@ -3502,6 +3533,7 @@ function saveSettings(){
     s.channels[c.id] = makeChannelThreshold(pc.warningOn, pc.dangerOn);
     s.channels[c.id].enabled = pc.enabled;
   });
+  if(id === 'p1') syncNativeAlertConfig(); // native background monitor only watches the real device's patient
   showToast('Settings saved for ' + Repository.patients.find(p=>p.id===id).name);
   go('clinicianDashboard');
 }
