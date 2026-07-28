@@ -223,6 +223,19 @@ input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; 
 
 /* charts */
 .chart-wrap{width:100%;}
+
+/* Debug Mode live EMG waveform (oscilloscope-style, one canvas per channel) */
+.wave-toolbar{display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
+.wave-tag{font-size:11px; color:var(--text3); font-weight:700;}
+.wave-btn{background:var(--bg2); color:var(--text2); border:1.5px solid var(--border);
+  border-radius:8px; padding:5px 9px; font-size:11.5px; font-weight:700; cursor:pointer;}
+.wave-btn.on{background:var(--primary); color:var(--primary-ink); border-color:var(--primary);}
+.wave-btn.clean-on{background:var(--danger); color:#fff; border-color:var(--danger);}
+.wave-info{font-size:11px; color:var(--text2); font-weight:700; min-width:96px; text-align:center;}
+.wave-note{font-size:10.5px; color:var(--text3); line-height:1.55; margin-top:8px;}
+#cleanViewWarn{background:var(--danger-tint); color:var(--danger); border:1px solid var(--danger);
+  border-radius:10px; padding:8px 11px; font-size:11px; line-height:1.55; margin:0 0 10px;}
+canvas.emgwave{display:block; width:100%; height:96px; border-radius:8px; background:var(--bg2);}
 .chart-legend{display:flex; gap:14px; flex-wrap:wrap; margin-bottom:8px;}
 .chart-legend .li{display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; color:var(--text2);}
 .chart-legend .li .sw{width:9px;height:9px;border-radius:3px;}
@@ -457,12 +470,8 @@ body{display:block; padding:0;}
               <button class="back" onclick="exitDebugMode()">✕</button>
             </div>
             <div class="scroll-pad">
-              <div class="section-header" style="margin-top:0;"><h2>Brace Data Source</h2></div>
-              <div class="seg" style="margin-bottom:12px;">
-                <button id="srcSimBtn" class="active" onclick="setEmgSource('simulated')">Simulated</button>
-                <button id="srcRealBtn" onclick="setEmgSource('real')">Real Device (Wi-Fi)</button>
-              </div>
-              <div id="realSourcePanel" style="display:none;">
+              <div class="section-header" style="margin-top:0;"><h2>Brace Connection</h2></div>
+              <div id="realSourcePanel">
                 <div class="card sm stack" style="gap:10px; margin-bottom:14px;">
                   <div>
                     <label class="field-label">Brace IP Address</label>
@@ -470,14 +479,14 @@ body{display:block; padding:0;}
                   </div>
                   <div>
                     <label class="field-label">Max Reference Signal (mV ≈ 100%)</label>
-                    <input type="text" id="espMaxMvInput" value="0.5" placeholder="0.5" />
-                    <div style="font-size:10.5px; color:var(--text3); margin-top:4px; line-height:1.5;">Scales the brace's raw signal onto this app's 0–100% activation display. There's no universal value — it depends on your ADC gain and electrode placement. Start around 0.3–1.0 mV, connect, then adjust while flexing so a real contraction reads in a sensible range.</div>
+                    <input type="text" id="espMaxMvInput" value="10" placeholder="10" />
+                    <div style="font-size:10.5px; color:var(--text3); margin-top:4px; line-height:1.5;">Scales the brace's <b>filtered</b> signal (20–450 Hz band-pass, 60 Hz notch) onto this app's 0–100% activation display. The default of <b>10 mV</b> comes from this project's own reference recordings, where resting muscle sits near 7–8% and the strongest contraction reaches full scale. It still depends on your ADC gain and electrode placement — connect, watch the waveform below, then adjust so a hard contraction reads near 100%.</div>
                   </div>
                   <button class="btn-outline" id="espConnectBtn" onclick="toggleEspConnection()">Connect</button>
                   <div style="font-size:11px; color:var(--text3); line-height:1.6;">
                     1. On your phone, join the brace's own Wi-Fi network first (Settings → Wi-Fi): <b>Vsera_Colab_pray_D1</b>.<br/>
                     2. Come back here and tap Connect — the app pulls live samples from the address above (default <b>192.168.4.1</b>).<br/>
-                    3. Once connected, this screen and the rest of the app (muscle bars, alerts, calibration) read the real signal instead of the simulation.
+                    3. Once connected, this screen and the rest of the app (muscle bars, alerts, calibration) read the live signal from the brace.
                   </div>
                 </div>
               </div>
@@ -487,8 +496,20 @@ body{display:block; padding:0;}
               </div>
 
               <div id="calibrationIdlePanel">
-                <div class="section-header" style="margin-top:0;"><h2>Live EMG Values</h2></div>
+                <div class="section-header" style="margin-top:0;"><h2>Live EMG Waveform</h2></div>
+                <div class="wave-toolbar">
+                  <span class="wave-tag">Sweep</span>
+                  <button class="wave-btn" onclick="stepWaveWindow(-1)">&laquo; 느리게</button>
+                  <span class="wave-info tabular" id="waveWinInfo">4096 pt / 3.16 s</span>
+                  <button class="wave-btn" onclick="stepWaveWindow(1)">빠르게 &raquo;</button>
+                  <button class="wave-btn" id="waveFreezeBtn" onclick="toggleWaveFreeze()">&#9208; Freeze</button>
+                </div>
+                <div class="wave-toolbar">
+                  <span class="wave-tag">Filter</span>
+                  <span id="waveFilterBtns"></span>
+                </div>
                 <div class="stack" id="debugLiveValues" style="gap:10px;"></div>
+                <div class="wave-note">Filter 버튼으로 표시 파형에 필터를 순서대로(HP→Notch→LP→Rectify→Envelope) 켜고 끄며 확인할 수 있습니다. 기본값은 20–450 Hz 대역통과 + 60 Hz 노치(브레이스 <span class="tabular">192.168.4.1</span> 페이지와 동일). 이 토글은 <b>표시 파형에만</b> 적용되며, % 활성도·알림·캘리브레이션은 항상 고정 필터로 계산됩니다. 점선은 Warning 임계값(mV 환산), 오른쪽 숫자는 250 ms RMS입니다.</div>
 
                 <div class="section-header"><h2>Calculated Thresholds</h2></div>
                 <div class="card sm" id="debugThresholds"></div>
@@ -497,11 +518,24 @@ body{display:block; padding:0;}
                 <button class="btn-primary" onclick="startCalibration()">Start Calibration</button>
                 <div style="height:10px;"></div>
                 <button class="btn-outline" id="redoCalibrationBtn" style="display:none;" onclick="startCalibration()">Redo Calibration</button>
+
+                <div class="section-header"><h2>Clean View (실험적)</h2></div>
+                <div class="wave-toolbar" style="margin-top:2px;">
+                  <button class="wave-btn" id="cleanViewBtn" onclick="toggleCleanView()">&#10024; Clean View</button>
+                  <span class="wave-info" id="cleanViewInfo">캘리브레이션 필요</span>
+                </div>
+                <div class="wave-note" style="margin-top:0;">
+                  캘리브레이션 동안 측정된 <b>휴식 상태 노이즈</b>를 학습해, 위 파형에서 그 성분만 빼주는 기능입니다(Wiener 방식).
+                  실측 데이터 검증 결과 EMG는 약 95% 보존하면서 노이즈 바닥을 약 50% 낮췄습니다.<br/>
+                  <b>전극을 피부에 부착한 상태</b>에서 캘리브레이션해야 합니다. 전극을 떼거나 공중에 둔 채로 학습하면
+                  실제와 다른 노이즈를 학습해(접촉 상태에 따라 노이즈 스펙트럼이 크게 달라짐) 신호가 왜곡됩니다.
+                </div>
+                <div id="cleanViewWarn" style="display:none;">&#9888; <b>표시 전용 · 실험적 기능</b> — 약 150ms 지연이 있으며, 활성도(%)·알림·캘리브레이션 계산에는 <b>적용되지 않습니다</b>. 파형 확인용으로만 사용하세요.</div>
               </div>
 
               <div id="calibrationActivePanel" style="display:none; text-align:center; padding:26px 0;">
                 <div style="font-size:13px; color:var(--text2); font-weight:700; margin-bottom:10px;">Relax your leg and ankle. Stay still.</div>
-                <div style="font-size:52px; font-weight:800; color:var(--navy);" class="tabular" id="calibrationCountdown">20</div>
+                <div style="font-size:52px; font-weight:800; color:var(--navy);" class="tabular" id="calibrationCountdown">10</div>
                 <div style="font-size:12px; color:var(--text2); margin-top:8px;">Collecting baseline EMG data…</div>
               </div>
 
@@ -626,21 +660,21 @@ body{display:block; padding:0;}
 
                     <!-- BACK/OUTER view: calf bulge (Gastrocnemius), fibular-head-to-ankle line (Fibularis Longus), lateral ankle -->
                     <text x="183" y="6" font-size="8" fill="var(--text3)" font-weight="700" text-anchor="middle">KNEE</text>
-                    <ellipse cx="184" cy="38" rx="13" ry="26" fill="#4CC9B0" fill-opacity="0.15"/>
-                    <line x1="196" y1="58" x2="182" y2="118" stroke="#6E7FDB" stroke-width="14" stroke-linecap="round" stroke-opacity="0.14"/>
+                    <ellipse cx="184" cy="38" rx="13" ry="26" fill="#6E7FDB" fill-opacity="0.15"/>
+                    <line x1="196" y1="58" x2="182" y2="118" stroke="#4CC9B0" stroke-width="14" stroke-linecap="round" stroke-opacity="0.14"/>
                     <rect x="168" y="8" width="32" height="62" rx="16" fill="none" stroke="var(--text3)" stroke-width="2"/>
                     <rect x="176" y="64" width="18" height="62" rx="9" fill="none" stroke="var(--text3)" stroke-width="2"/>
                     <path d="M176 126 Q176 140 190 143 L218 149 Q222 150 220 155 L180 155 Q174 153 174 142 Z" fill="none" stroke="var(--text3)" stroke-width="2"/>
-                    <line x1="184" y1="20" x2="184" y2="34" stroke="#4CC9B0" stroke-width="2"/>
-                    <circle cx="184" cy="20" r="6" fill="#4CC9B0" stroke="#fff" stroke-width="1.5"/>
+                    <line x1="184" y1="20" x2="184" y2="34" stroke="#6E7FDB" stroke-width="2"/>
+                    <circle cx="184" cy="20" r="6" fill="#6E7FDB" stroke="#fff" stroke-width="1.5"/>
                     <text x="184" y="22.5" font-size="7" fill="#fff" font-weight="800" text-anchor="middle">3</text>
-                    <circle cx="184" cy="34" r="6" fill="#4CC9B0" stroke="#fff" stroke-width="1.5"/>
+                    <circle cx="184" cy="34" r="6" fill="#6E7FDB" stroke="#fff" stroke-width="1.5"/>
                     <text x="184" y="36.5" font-size="7" fill="#fff" font-weight="800" text-anchor="middle">3</text>
                     <text x="201" y="30" font-size="10" fill="var(--text)" font-weight="700">EMG 3</text>
-                    <line x1="190" y1="82" x2="188" y2="91" stroke="#6E7FDB" stroke-width="2"/>
-                    <circle cx="190" cy="82" r="6" fill="#6E7FDB" stroke="#fff" stroke-width="1.5"/>
+                    <line x1="190" y1="82" x2="188" y2="91" stroke="#4CC9B0" stroke-width="2"/>
+                    <circle cx="190" cy="82" r="6" fill="#4CC9B0" stroke="#fff" stroke-width="1.5"/>
                     <text x="190" y="84.5" font-size="7" fill="#fff" font-weight="800" text-anchor="middle">2</text>
-                    <circle cx="188" cy="91" r="6" fill="#6E7FDB" stroke="#fff" stroke-width="1.5"/>
+                    <circle cx="188" cy="91" r="6" fill="#4CC9B0" stroke="#fff" stroke-width="1.5"/>
                     <text x="188" y="93.5" font-size="7" fill="#fff" font-weight="800" text-anchor="middle">2</text>
                     <text x="204" y="90" font-size="10" fill="var(--text)" font-weight="700">EMG 2</text>
                     <circle cx="178" cy="118" r="6" fill="#5B6B78" stroke="#fff" stroke-width="1.5"/>
@@ -973,14 +1007,61 @@ const CHANNEL_DEFS = [
 ];
 
 /* Alert Sensitivity presets: a single click sets the Warning/Danger
-   thresholds (applied to every channel) plus all three alert durations. */
+   thresholds (applied to every channel) plus all three alert durations.
+
+   These numbers are NOT guesses — they were derived from the project's own
+   20 reference recordings in raw_signals/ (sitting/stand at rest;
+   toe_pull/front_stretch/3steps/5steps as movement), replayed through the
+   exact filter chain + 100ms-RMS envelope + EmgAlertEvaluator this app runs,
+   with EMG_FULL_SCALE_MV = 10mV as the 100% reference. Measured levels
+   (% of full scale, 100ms RMS windows):
+
+     at rest    : median 7.2-8.2%,  p95 9.8-11.4%,  p99 14.3-16.0%
+     walking    : median 12-25%,    p90 26-48%,     max 47-91%
+     toe pull   : ch3 (gastroc) median 10%, p75 37%, p90 72%, max >100%
+     front bend : median 8-13%,     p90 17-27%
+
+   Resulting behaviour of the Balanced preset on those same recordings:
+     sitting/stand -> 100% safe, zero alerts
+     toe_pull      -> 58% safe / 36% warning / 6% danger
+     front_stretch -> 75% safe / 25% warning / 0.6% danger
+     steps         -> 21% safe / 67% warning / 12% danger
+
+   The previous values (45/60/70 warning, 70/80/90 danger) sat far above even
+   maximal voluntary contraction on this hardware and could essentially never
+   fire; the durations (up to 1800ms) were also longer than the real activity
+   bursts, which last 0.3-1.3s. */
+/* Re-derived from raw_signals_01 (20 recordings) replayed through the app's
+   current chain (HP20 + notch 60/120/180 + LP450, 100ms RMS, 10mV full scale).
+
+   Two findings drove the change to PER-CHANNEL thresholds:
+
+   1) The channels behave completely differently. During toe_pull — the movement
+      the alert exists to catch — only ch3 (lateral gastrocnemius) responds
+      (p90 71.5% vs rest p99 14.2%); ch1/ch2 stay at their resting level
+      (p95 11.6/13.0 vs rest p95 10.2/11.5). One shared threshold therefore has
+      to be low enough for ch3, which makes ch1/ch2 fire on ordinary gait.
+
+   2) Plantarflexion also happens during normal walking (push-off), so amplitude
+      alone cannot separate "pointing the foot" from "walking". Duration can:
+      ch3 stays above 30% for a median of 368ms during toe_pull but only 104ms
+      per step while walking (p90 254ms). Hence the shorter, tighter danger
+      windows below instead of the old 600-900ms.
+
+   Old shared 28/50 @300/600/400 gave walk MORE danger time than toe_pull
+   (10.9% vs 6.4%) — i.e. it alarmed most on normal walking. The balanced preset
+   below inverts that (toe_pull 11.9% vs walk 5.5%) while keeping rest at 0.0%
+   across all six sitting/standing recordings. */
 const ALERT_SENSITIVITY_PRESETS = [
   {id:'early', label:'Early Alert', subtitle:'Detects lower or shorter muscle activity',
-    warning:45, danger:70, warningDurationMs:300, dangerDurationMs:800, releaseDurationMs:300},
+    ch:{ch1:[50,75], ch2:[42,65], ch3:[26,44]},
+    warningDurationMs:300, dangerDurationMs:350, releaseDurationMs:300},
   {id:'balanced', label:'Balanced', subtitle:'Recommended default setting',
-    warning:60, danger:80, warningDurationMs:500, dangerDurationMs:1200, releaseDurationMs:300},
+    ch:{ch1:[60,85], ch2:[50,75], ch3:[32,52]},
+    warningDurationMs:350, dangerDurationMs:400, releaseDurationMs:300},
   {id:'sustained', label:'Sustained Activity Only', subtitle:'Alerts only for stronger or longer activity',
-    warning:70, danger:90, warningDurationMs:800, dangerDurationMs:1800, releaseDurationMs:300},
+    ch:{ch1:[70,95], ch2:[60,85], ch3:[40,62]},
+    warningDurationMs:450, dangerDurationMs:600, releaseDurationMs:350},
 ];
 
 /* OFF thresholds sit below their ON counterpart (hysteresis) so a value
@@ -1001,9 +1082,9 @@ function makeThresholdSetting(){
   return {
     presetId:'balanced',
     channels:{
-      ch1: makeChannelThreshold(p.warning, p.danger),
-      ch2: makeChannelThreshold(p.warning, p.danger),
-      ch3: makeChannelThreshold(p.warning, p.danger),
+      ch1: makeChannelThreshold(p.ch.ch1[0], p.ch.ch1[1]),
+      ch2: makeChannelThreshold(p.ch.ch2[0], p.ch.ch2[1]),
+      ch3: makeChannelThreshold(p.ch.ch3[0], p.ch.ch3[1]),
     },
     warningDurationMs:p.warningDurationMs,
     dangerDurationMs:p.dangerDurationMs,
@@ -1024,15 +1105,19 @@ const EXERCISE_LIBRARY = [
     desc:'Traces gentle dorsiflexion motion to mobilize the front of the ankle without loading the joint.',
     steps:'1. Sit with leg extended.  2. Lift your toes toward your shin.  3. "Draw" each letter A–Z slowly in the air with your big toe.  4. Keep the motion smooth — no jerking.',
     videoUrl:'https://www.youtube.com/watch?v=vHMJ0zgrsFU', videoTitle:'The "alphabet exercise" for foot and ankle strength'},
-  {id:'ex_calf_raise', name:'Seated Calf Raises', channel:'ch2', icon:'🦵', unit:'reps', defaultSets:3, defaultReps:12,
+  /* channel ids below must match CHANNEL_DEFS: ch2 = Fibularis Longus
+     (eversion), ch3 = Lateral Gastrocnemius (plantarflexion). Four of these
+     were mapped to the opposite channel from the muscle named in their own
+     description, which put calf work under the fibularis bar and vice versa. */
+  {id:'ex_calf_raise', name:'Seated Calf Raises', channel:'ch3', icon:'🦵', unit:'reps', defaultSets:3, defaultReps:12,
     desc:'Gently loads the calf / lateral gastrocnemius to rebuild controlled plantarflexion strength.',
     steps:'1. Sit with feet flat on the floor.  2. Press through the balls of your feet, lifting your heels.  3. Hold for 2 seconds.  4. Lower slowly.',
     videoUrl:'https://www.youtube.com/watch?v=Lv9rklLUp2k', videoTitle:'Ankle exercise - Seated calf raise | heel raise'},
-  {id:'ex_eversion_band', name:'Resistance Band Eversion', channel:'ch3', icon:'🎗️', unit:'reps', defaultSets:3, defaultReps:15,
+  {id:'ex_eversion_band', name:'Resistance Band Eversion', channel:'ch2', icon:'🎗️', unit:'reps', defaultSets:3, defaultReps:15,
     desc:'Strengthens the fibularis longus to improve lateral ankle stability.',
     steps:'1. Loop a resistance band around both feet.  2. Anchor the uninjured foot.  3. Push the injured foot outward against the band.  4. Return slowly.',
     videoUrl:'https://www.youtube.com/watch?v=xfrncpP5ONQ', videoTitle:'Ankle Eversion with Resistive Band - Ask Doctor Jo'},
-  {id:'ex_towel_stretch', name:'Towel Calf Stretch', channel:'ch2', icon:'🧻', unit:'sec hold', defaultSets:2, defaultReps:30,
+  {id:'ex_towel_stretch', name:'Towel Calf Stretch', channel:'ch3', icon:'🧻', unit:'sec hold', defaultSets:2, defaultReps:30,
     desc:'A gentle static stretch to release tension after overactive plantarflexion.',
     steps:'1. Loop a towel around the ball of your foot.  2. Keep your knee straight.  3. Pull your toes toward you until a gentle stretch.  4. Hold, breathing normally.',
     videoUrl:'https://www.youtube.com/watch?v=6ifswsHkwlA', videoTitle:'Calf Stretch in Long Sitting - Ask Doctor Jo'},
@@ -1040,7 +1125,7 @@ const EXERCISE_LIBRARY = [
     desc:'Improves general mobility across all three muscle groups with a low-impact circular motion.',
     steps:'1. Lift your foot slightly off the ground.  2. Rotate slowly clockwise.  3. Repeat counter-clockwise.  4. Keep the motion controlled and pain-free.',
     videoUrl:'https://youtu.be/hE0IsV4e9oE', videoTitle:'발목인대 & 염좌 재활운동 - 1주차 (Ankle Ligament & Sprain Rehab — Week 1)'},
-  {id:'ex_balance', name:'Single-Leg Balance', channel:'ch3', icon:'🧍', unit:'sec hold', defaultSets:3, defaultReps:20,
+  {id:'ex_balance', name:'Single-Leg Balance', channel:'ch2', icon:'🧍', unit:'sec hold', defaultSets:3, defaultReps:20,
     desc:'Builds proprioception and stabilizer strength (fibularis longus) to help prevent re-injury.',
     steps:'1. Stand near a wall for safety.  2. Lift the uninjured leg slightly off the ground.  3. Balance on the injured ankle.  4. Hold, engaging the outer ankle.',
     videoUrl:'https://youtu.be/5tX_Dqd7cak', videoTitle:'발목인대 & 염좌 재활운동 - 2주차 (Ankle Ligament & Sprain Rehab — Week 2)'},
@@ -1206,7 +1291,7 @@ class EmgAlertEvaluator {
   }
   evaluate(sample, dtMs){
     const s = this.settings;
-    let activeCount = 0;
+    let highCount = 0;
     const perChannel = {};
     ['ch1','ch2','ch3'].forEach(id => {
       const ch = s.channels[id];
@@ -1250,8 +1335,8 @@ class EmgAlertEvaluator {
       } else {
         cs.warningMs += dtMs;
         cs.dangerMs = tier === 'high' ? cs.dangerMs + dtMs : 0;
-        activeCount++;
       }
+      if(tier === 'high') highCount++;
 
       let status = 'safe'; // low activity, or not sustained long enough yet -> ignored
       if(tier === 'high' && cs.dangerMs >= s.dangerDurationMs) status = 'danger';
@@ -1259,8 +1344,15 @@ class EmgAlertEvaluator {
       perChannel[id] = {value:val, status, tier, warningMs:cs.warningMs};
     });
 
-    this.multiMs = activeCount >= 2 ? this.multiMs + dtMs : 0;
-    const multiTriggered = s.multiChannelDanger && activeCount >= 2 && this.multiMs >= s.warningDurationMs;
+    /* Multi-muscle danger needs 2+ channels in the HIGH tier held for the
+       full Danger Duration. The original rule (any 2 channels merely above
+       their Warning edge, held only for warningDurationMs) fires constantly
+       on ordinary walking: replaying the raw_signals step recordings, the
+       lower leg co-activates ch1+ch3 on essentially every stride, so that
+       rule reported ~53 danger episodes/min during normal gait while the
+       per-channel rules reported 17. */
+    this.multiMs = highCount >= 2 ? this.multiMs + dtMs : 0;
+    const multiTriggered = s.multiChannelDanger && highCount >= 2 && this.multiMs >= s.dangerDurationMs;
 
     let overall = 'safe';
     let cause = null;
@@ -1281,18 +1373,295 @@ class EmgAlertEvaluator {
 }
 
 /* =========================================================
+   EMG FRONT-END DSP — the same chain the ESP32 viewer page runs
+   =========================================================
+   The brace streams RAW 24-bit ADC codes, and on this hardware those carry
+   a large electrode half-cell DC offset. Measured across all 20 reference
+   recordings in raw_signals/ it sits at -85mV (ch1) / -89mV (ch2) /
+   -96mV (ch3) — roughly 700,000 ADC codes, which is 10-100x the EMG itself.
+
+   The previous version of EspEmgSource took abs() of the raw code and RMS'd
+   it, so it was measuring that DC offset rather than muscle activity.
+   Replaying sitting01 (a completely at-rest recording) through that code
+   yields 86/90/96 mV -> 100% activation on all three channels, and every
+   movement file gives the same answer. Real-device mode could therefore only
+   ever read "100%, danger", no matter what the leg was doing.
+
+   Fixing it requires the band-pass the brace's own viewer page already
+   applies before it displays anything: HP 20Hz (removes the DC offset and
+   motion drift), notch 60Hz (mains — measured at 4-13% of in-band power in
+   these recordings), LP 450Hz (upper edge of the sEMG band). The biquad
+   below is the same RBJ-cookbook implementation used in ESP32_WIFI_code.ino,
+   kept identical so the app and the brace's web page agree on the signal. */
+const EMG_FS = 1295;    // Hz — tied to the STM32's ADS131M08 OSR setting (OSR_1024)
+const EMG_HP_FC = 20, EMG_LP_FC = 450, EMG_NOTCH_F = 60, EMG_NOTCH_Q = 30;
+/* Powerline fundamental + harmonics. Offline test on real recordings: a single
+   60Hz notch leaves 120/180Hz at +20/+18dB; notching all three removes them
+   while keeping 97.7% of the EMG-band energy (vs 97.6% for single notch). */
+const EMG_NOTCH_HARMONICS = [60, 120, 180];
+
+function makeBiquad(type, f0, Q, fs){
+  const w0 = 2*Math.PI*f0/fs, c = Math.cos(w0), s = Math.sin(w0), al = s/(2*Q);
+  let b0,b1,b2,a0,a1,a2;
+  if(type === 'hp'){      b0=(1+c)/2; b1=-(1+c); b2=(1+c)/2; a0=1+al; a1=-2*c; a2=1-al; }
+  else if(type === 'lp'){ b0=(1-c)/2; b1=1-c;    b2=(1-c)/2; a0=1+al; a1=-2*c; a2=1-al; }
+  else /* notch */ {      b0=1;       b1=-2*c;   b2=1;       a0=1+al; a1=-2*c; a2=1-al; }
+  b0/=a0; b1/=a0; b2/=a0; a1/=a0; a2/=a0;
+  let x1=0,x2=0,y1=0,y2=0;
+  return x => { const y = b0*x + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+                x2=x1; x1=x; y2=y1; y1=y; return y; };
+}
+/* One independent chain per channel — biquads carry state, so channels can
+   never share an instance. */
+function makeEmgChain(){
+  const hp = makeBiquad('hp', EMG_HP_FC, 0.707, EMG_FS);
+  const notches = EMG_NOTCH_HARMONICS.map(f => makeBiquad('notch', f, EMG_NOTCH_Q, EMG_FS));
+  const lp = makeBiquad('lp', EMG_LP_FC, 0.707, EMG_FS);
+  return x => { let y = hp(x); for(let i=0;i<notches.length;i++) y = notches[i](y); return lp(y); };
+}
+/* A 20Hz high-pass fed a -90mV step rings for a few hundred ms. Discard
+   samples until it settles, otherwise the first second after every connect
+   reads as a full-scale contraction. */
+const EMG_SETTLE_SAMPLES = Math.round(EMG_FS * 0.6);
+
+/* mV that maps to 100% activation. The peak 100ms-RMS envelope during the
+   strongest contractions in raw_signals is 12.0mV (ch1, walking) and 13.6mV
+   (ch3, toe pull), so 10mV puts a hard contraction at/above full scale while
+   leaving rest at ~7-8%. The old default of 0.5mV was below even the resting
+   noise floor (0.72-0.82mV), so every channel pegged at 100% regardless. */
+const DEFAULT_ESP_MAX_MV = 10.0;
+const ESP_CODE_TO_MV = 1200.0 / 8388608.0; // VREF 1.2V = 1200mV / 2^23, PGA=1 — must match the .ino
+
+/* =========================================================
+   EmgWave — per-sample filtered waveform ring buffer
+   =========================================================
+   Debug Mode plots the actual waveform instead of printing a number, so it
+   needs the individual samples at the brace's full rate, not the
+   once-per-poll RMS the rest of the app consumes. 8192 floats/channel =
+   6.3s at 1295Hz, matching the longest sweep window the ESP32 viewer page
+   offers. Values stored are filtered mV. */
+const EMG_WAVE_BUF = 8192;
+const EmgWave = {
+  buf: [new Float32Array(EMG_WAVE_BUF), new Float32Array(EMG_WAVE_BUF), new Float32Array(EMG_WAVE_BUF)],
+  head: 0,
+  total: 0,
+  push(v0, v1, v2){
+    const h = this.head;
+    this.buf[0][h] = v0; this.buf[1][h] = v1; this.buf[2][h] = v2;
+    this.head = (h + 1) % EMG_WAVE_BUF;
+    this.total++;
+  },
+  clear(){ this.buf.forEach(b => b.fill(0)); this.head = 0; this.total = 0; },
+  /* sample i (0 = oldest) within the most recent `win` samples */
+  at(ch, i, win){ return this.buf[ch][(this.head - win + i + EMG_WAVE_BUF) % EMG_WAVE_BUF]; },
+};
+
+/* =========================================================
+   DispWave — display-only waveform ring (Debug Mode plot reads this)
+   =========================================================
+   Fed by a TOGGLEABLE filter pipeline so filters can be switched on/off while
+   monitoring, WITHOUT affecting EmgWave — which calibration (RawEmg) and the
+   % activation / alerts depend on. Default modules (HP+Notch+LP) match EmgWave,
+   so the plot looks identical until the user flips a toggle. */
+const DispWave = {
+  buf: [new Float32Array(EMG_WAVE_BUF), new Float32Array(EMG_WAVE_BUF), new Float32Array(EMG_WAVE_BUF)],
+  head: 0, total: 0,
+  push(v0, v1, v2){ const h=this.head; this.buf[0][h]=v0; this.buf[1][h]=v1; this.buf[2][h]=v2;
+                    this.head=(h+1)%EMG_WAVE_BUF; this.total++; },
+  clear(){ this.buf.forEach(b=>b.fill(0)); this.head=0; this.total=0; },
+  at(ch,i,win){ return this.buf[ch][(this.head-win+i+EMG_WAVE_BUF)%EMG_WAVE_BUF]; },
+};
+
+/* Toggleable display filters for Debug Mode (array order = signal path).
+   Same RBJ biquad as the EMG chain; buttons in the wave toolbar flip these.
+   Only the plot (DispWave) is affected — RMS/%/calibration stay on EmgWave. */
+const WAVE_MODULES = [
+  {id:'hp',    name:'HP 20',    def:true,  make:()=>makeBiquad('hp',    EMG_HP_FC,   0.707,       EMG_FS)},
+  {id:'notch', name:'Notch 60/120/180', def:true, make:()=>{ const ns=EMG_NOTCH_HARMONICS.map(f=>makeBiquad('notch',f,EMG_NOTCH_Q,EMG_FS));
+                                                             return x=>{ for(let i=0;i<ns.length;i++) x=ns[i](x); return x; }; }},
+  {id:'lp',    name:'LP 450',   def:true,  make:()=>makeBiquad('lp',    EMG_LP_FC,   0.707,       EMG_FS)},
+  {id:'rect',  name:'Rectify',  def:false, make:()=>(x=>Math.abs(x))},
+  {id:'env',   name:'Envelope', def:false, make:()=>{let y=0; const a=1-Math.exp(-2*Math.PI*4/EMG_FS);
+                                                     return x=>{ y+=a*(x-y); return y; };}},
+];
+const waveEnabled = {}; WAVE_MODULES.forEach(m => waveEnabled[m.id] = !!m.def);
+const waveProc = [0,1,2].map(() => WAVE_MODULES.map(m => m.make()));  // per-channel instances (biquads hold state)
+function dispProcess(ch, mv){
+  for(let i=0;i<WAVE_MODULES.length;i++){ if(waveEnabled[WAVE_MODULES[i].id]) mv = waveProc[ch][i](mv); }
+  return mv;
+}
+/* Build the filter toggle buttons once, into the Debug Mode wave toolbar. */
+function buildWaveFilterButtons(){
+  const host = document.getElementById('waveFilterBtns');
+  if(!host || host.childElementCount) return;
+  WAVE_MODULES.forEach((m, i) => {
+    if(i>0){ const s=document.createElement('span'); s.textContent='→';
+             s.style.cssText='color:var(--text3);font-size:11px;margin:0 1px;'; host.appendChild(s); }
+    const b=document.createElement('button');
+    b.className='wave-btn'+(m.def?' on':''); b.textContent=m.name;
+    b.onclick=()=>{ waveEnabled[m.id]=!waveEnabled[m.id]; b.classList.toggle('on', waveEnabled[m.id]); };
+    host.appendChild(b);
+  });
+}
+
+/* =========================================================
+   Clean View — real-time decision-directed Wiener denoiser (DISPLAY ONLY)
+   =========================================================
+   Learns a noise power spectrum from the recent signal (assumed at rest) and
+   applies a decision-directed (Ephraim-Malah) Wiener gain via 256-pt STFT /
+   weighted overlap-add. Offline-validated on real recordings: ~95% of EMG-band
+   energy retained, ~50% lower noise floor, WITHOUT the "musical noise" of plain
+   spectral subtraction. Costs ~148ms latency (N-H=192 samples), so it is NEVER
+   on the %/alert/calibration path — only the Debug plot, and only when the user
+   explicitly enables Clean View. */
+function fftCplx(re, im, inv){
+  const n=re.length;
+  for(let i=1,j=0;i<n;i++){ let bit=n>>1; for(;j&bit;bit>>=1) j^=bit; j^=bit;
+    if(i<j){ let t=re[i];re[i]=re[j];re[j]=t; t=im[i];im[i]=im[j];im[j]=t; } }
+  for(let len=2;len<=n;len<<=1){
+    const ang=(inv?2:-2)*Math.PI/len, wr=Math.cos(ang), wi=Math.sin(ang), h=len>>1;
+    for(let i=0;i<n;i+=len){ let cr=1,ci=0;
+      for(let k=0;k<h;k++){
+        const ur=re[i+k],ui=im[i+k];
+        const vr=re[i+k+h]*cr-im[i+k+h]*ci, vi=re[i+k+h]*ci+im[i+k+h]*cr;
+        re[i+k]=ur+vr; im[i+k]=ui+vi; re[i+k+h]=ur-vr; im[i+k+h]=ui-vi;
+        const ncr=cr*wr-ci*wi; ci=cr*wi+ci*wr; cr=ncr;
+      } } }
+  if(inv){ for(let i=0;i<n;i++){ re[i]/=n; im[i]/=n; } }
+}
+const CLEAN_N=256, CLEAN_H=64, CLEAN_ALPHA=0.98, CLEAN_GMIN=0.2;
+const cleanWin=new Float64Array(CLEAN_N);
+for(let i=0;i<CLEAN_N;i++) cleanWin[i]=0.5-0.5*Math.cos(2*Math.PI*i/(CLEAN_N-1));
+function makeCleanProc(){
+  const N=CLEAN_N, H=CLEAN_H;
+  const ring=new Float64Array(N); let rhead=0, hc=0;
+  const re=new Float64Array(N), im=new Float64Array(N);
+  const acc=new Float64Array(N), ws=new Float64Array(N);
+  let noiseP=null, prevP=null; const outQ=[];
+  function frame(){
+    for(let i=0;i<N;i++){ const v=ring[(rhead+i)%N]; re[i]=v*cleanWin[i]; im[i]=0; }
+    fftCplx(re,im,false);
+    if(noiseP){
+      for(let k=0;k<N;k++){
+        const P=re[k]*re[k]+im[k]*im[k], nz=noiseP[k]+1e-9;
+        const post=P/nz, pri=CLEAN_ALPHA*(prevP[k]/nz)+(1-CLEAN_ALPHA)*Math.max(post-1,0);
+        let G=pri/(1+pri); if(G<CLEAN_GMIN) G=CLEAN_GMIN;
+        re[k]*=G; im[k]*=G; prevP[k]=G*G*P;
+      }
+    }
+    fftCplx(re,im,true);
+    for(let i=0;i<N-H;i++){ acc[i]=acc[i+H]; ws[i]=ws[i+H]; }
+    for(let i=N-H;i<N;i++){ acc[i]=0; ws[i]=0; }
+    for(let i=0;i<N;i++){ acc[i]+=re[i]*cleanWin[i]; ws[i]+=cleanWin[i]*cleanWin[i]; }
+    for(let i=0;i<H;i++) outQ.push(ws[i]>1e-6 ? acc[i]/ws[i] : 0);
+  }
+  return {
+    setNoise(p){ noiseP=p; prevP=new Float64Array(N); },
+    hasNoise(){ return !!noiseP; },
+    reset(){ ring.fill(0); acc.fill(0); ws.fill(0); rhead=0; hc=0; outQ.length=0; noiseP=null; prevP=null; },
+    push(x){ ring[rhead]=x; rhead=(rhead+1)%N; if(++hc>=H){ hc=0; frame(); }
+             return outQ.length ? outQ.shift() : null; }
+  };
+}
+const cleanProc=[makeCleanProc(), makeCleanProc(), makeCleanProc()];
+/* CleanWave — Clean View output ring (lags live by ~148ms). */
+const CleanWave={
+  buf:[new Float32Array(EMG_WAVE_BUF),new Float32Array(EMG_WAVE_BUF),new Float32Array(EMG_WAVE_BUF)],
+  head:0,total:0,
+  push(a,b,c){const h=this.head;this.buf[0][h]=a;this.buf[1][h]=b;this.buf[2][h]=c;this.head=(h+1)%EMG_WAVE_BUF;this.total++;},
+  clear(){this.buf.forEach(x=>x.fill(0));this.head=0;this.total=0;},
+  at(ch,i,win){return this.buf[ch][(this.head-win+i+EMG_WAVE_BUF)%EMG_WAVE_BUF];},
+};
+let cleanEnabled=false;
+/* The learned noise profile is kept OUTSIDE the processors so it survives their
+   reset(), and so Clean View can be toggled on/off without re-learning.
+   Captured during calibration — see captureCleanNoiseFromCalibration(). */
+let cleanNoiseProfile=null, cleanNoiseAt=0;
+
+/* Learn a noise power spectrum from the most recent `seconds` of EmgWave
+   (the fixed HP+notch+LP chain). ONLY valid while the electrodes are on the
+   skin and the muscle is at rest — see the note in the Debug Mode UI. */
+function learnCleanNoise(seconds){
+  /* MUST clamp to EMG_WAVE_BUF: EmgWave.at() computes
+     (head - win + i + BUF) % BUF, which only stays in range while win <= BUF.
+     Asking for more (8s = 10360 samples vs the 8192-sample ring) produced a
+     negative index -> undefined -> a NaN noise profile -> NaN output. */
+  const N=CLEAN_N, H=CLEAN_H;
+  const need=Math.min(EmgWave.total, EMG_WAVE_BUF, Math.round(EMG_FS*seconds));
+  if(need<N*2) return false;
+  const seg=new Float64Array(need), re=new Float64Array(N), im=new Float64Array(N);
+  const prof=[];
+  for(let ch=0;ch<3;ch++){
+    for(let i=0;i<need;i++) seg[i]=EmgWave.at(ch,i,need);
+    const P=new Float64Array(N); let cnt=0;
+    for(let s=0;s+N<=need;s+=H){
+      for(let i=0;i<N;i++){ re[i]=seg[s+i]*cleanWin[i]; im[i]=0; }
+      fftCplx(re,im,false);
+      for(let k=0;k<N;k++) P[k]+=re[k]*re[k]+im[k]*im[k];
+      cnt++;
+    }
+    for(let k=0;k<N;k++) P[k]/=Math.max(cnt,1);
+    // Never store a profile with a non-finite bin: one NaN propagates through
+    // the Wiener gain and blanks the whole plot.
+    for(let k=0;k<N;k++) if(!isFinite(P[k])) return false;
+    prof.push(P);
+  }
+  cleanNoiseProfile=prof; cleanNoiseAt=Date.now();
+  return true;
+}
+/* Called when a calibration run succeeds. Calibration is exactly the right
+   moment to learn: electrodes on the skin, muscle deliberately relaxed —
+   which is the assumption the Wiener gain is built on. Uses the last 8s so any
+   settling at the start of the countdown is excluded. */
+function captureCleanNoiseFromCalibration(){
+  const ok=learnCleanNoise(5);   // 5s < the 6.3s ring, so no clamping is needed
+  if(ok && cleanEnabled){ cleanProc.forEach((p,i)=>{ p.reset(); p.setNoise(cleanNoiseProfile[i]); }); CleanWave.clear(); }
+  updateCleanViewUI();
+  return ok;
+}
+function updateCleanViewUI(){
+  const b=document.getElementById('cleanViewBtn'), warn=document.getElementById('cleanViewWarn'),
+        info=document.getElementById('cleanViewInfo');
+  if(b){ b.classList.toggle('clean-on', cleanEnabled); b.disabled=!cleanNoiseProfile; b.style.opacity=cleanNoiseProfile?'1':'0.45'; }
+  if(warn) warn.style.display = cleanEnabled ? 'block' : 'none';
+  if(info) info.textContent = !cleanNoiseProfile ? '캘리브레이션 필요'
+    : (cleanEnabled ? '적용 중 · 노이즈 프로파일 학습됨' : '사용 가능');
+}
+function toggleCleanView(){
+  if(!cleanNoiseProfile){ updateCleanViewUI(); return; }   // needs a calibration first
+  cleanEnabled=!cleanEnabled;
+  cleanProc.forEach((p,i)=>{ p.reset(); if(cleanEnabled) p.setNoise(cleanNoiseProfile[i]); });
+  CleanWave.clear();
+  updateCleanViewUI();
+}
+
+/* =========================================================
    FakeEmgDataSource — periodic dummy EMG sample generator
-   ========================================================= */
+   =========================================================
+   base[] holds the current activation level (0-100%) for each channel and is
+   the single value every consumer reads — muscle bars, the alert evaluator,
+   Debug Mode. In Real mode EspEmgSource overwrites it from the brace; in
+   Simulated mode next() walks it randomly.
+
+   Resting/spike levels below are set from the measured recordings rather
+   than picked by eye: at rest the three channels sit at 7.3 / 8.2 / 7.2 %
+   of the 10mV full scale, and movement bursts reach 25-70%. The old values
+   (base 22/28/18, spikes 70-98) put the simulated "resting" leg at 3x its
+   real resting level and every spike into saturation. */
+const SIM_REST_LEVEL = {ch1:7.3, ch2:8.2, ch3:7.2};   // measured rest medians (% of full scale)
 const FakeEmgDataSource = {
-  base:{ch1:22, ch2:28, ch3:18},
+  base:{ch1:SIM_REST_LEVEL.ch1, ch2:SIM_REST_LEVEL.ch2, ch3:SIM_REST_LEVEL.ch3},
   next(spike){
     const s = {};
     ['ch1','ch2','ch3'].forEach(id => {
-      let v = this.base[id] + (Math.random()*14 - 7);
-      if(spike && spike[id]) v = 70 + Math.random()*28;
-      v = Math.max(2, Math.min(100, v));
+      // measured rest spread is ~+-1.5% (SD) around the median, not +-7
+      let v = SIM_REST_LEVEL[id] + (Math.random()*3 - 1.5);
+      // a spike stands in for a real movement burst: walking p90 is 26-48%,
+      // a strong toe pull peaks near full scale
+      if(spike && spike[id]) v = 30 + Math.random()*45;
+      v = Math.max(1, Math.min(100, v));
       this.base[id] = this.base[id]*0.6 + v*0.4;
-      s[id] = Math.round(v);
+      s[id] = Math.round(this.base[id]);
     });
     s.quality = {ch1: 88+Math.round(Math.random()*10), ch2: 85+Math.round(Math.random()*12), ch3: 90+Math.round(Math.random()*8)};
     return s;
@@ -1300,54 +1669,114 @@ const FakeEmgDataSource = {
 };
 
 /* =========================================================
+   SimEmgWave — synthetic waveform behind Simulated mode
+   =========================================================
+   Debug Mode's plot needs per-sample data, which the simulation has no
+   real source for. Generating white noise through the same band-pass gives
+   the characteristic sEMG interference pattern, scaled so its RMS matches
+   whatever activation level FakeEmgDataSource.base currently holds — so the
+   waveform and the % bars always agree with each other. */
+const SimEmgWave = {
+  chain:[makeEmgChain(), makeEmgChain(), makeEmgChain()],
+  lastMs:0,
+  reset(){ this.chain = [makeEmgChain(), makeEmgChain(), makeEmgChain()]; this.lastMs = 0; },
+  pump(){
+    const now = Date.now();
+    if(!this.lastMs){ this.lastMs = now; return; }
+    // cap the catch-up so a backgrounded tab doesn't generate a huge burst
+    const n = Math.min(Math.round((now - this.lastMs) * EMG_FS / 1000), EMG_FS);
+    if(n <= 0) return;
+    this.lastMs = now;
+    const fs = Math.max(0.001, appState.espMaxMv || DEFAULT_ESP_MAX_MV);
+    /* Uniform noise on [-amp, amp] has RMS amp/sqrt(3), and the 20-450Hz
+       band-pass then keeps ~sqrt(0.66) of that at FS=1295. Pre-multiplying by
+       2.14 cancels both so the plotted waveform's RMS lands on exactly the
+       activation level the bars are showing — verified in-page: base 7.3%
+       renders at 7.3% +/- 0.2. */
+    const amp = ['ch1','ch2','ch3'].map(id => FakeEmgDataSource.base[id]/100 * fs * 2.14);
+    for(let k=0;k<n;k++){
+      const r0=(Math.random()*2-1)*amp[0], r1=(Math.random()*2-1)*amp[1], r2=(Math.random()*2-1)*amp[2];
+      EmgWave.push(this.chain[0](r0), this.chain[1](r1), this.chain[2](r2));         // fixed → RMS/calibration
+      DispWave.push(dispProcess(0,r0), dispProcess(1,r1), dispProcess(2,r2));        // toggleable → plot
+    }
+  }
+};
+
+/* =========================================================
    EspEmgSource — real hardware bridge to the ESP32-S3 brace
-   (see ESP32_WIFI_code.ino). The sketch runs its own Wi-Fi AP and a tiny
-   web server at http://192.168.4.1 exposing GET /samples?since=N, which
-   returns {"idx":<latest sample counter>, "d":[[emg1,emg2,emg3], ...]} —
-   each value is a raw 24-bit signed ADC code from the ADS131M08 (already
-   sign-extended by the sketch), sampled at ~1295Hz and forwarded from the
-   STM32 over UART. This module polls that endpoint the same way the
-   sketch's own reference HTML page does (~40ms), converts codes to mV
-   (VREF=1.2V, 2^23 full-scale, PGA=1), takes an RMS over each poll batch,
-   then scales it onto this app's existing 0-100 "% activation" scale
-   using a user-set max-reference value (there is no universal mV->%
-   constant — it depends on ADC gain/electrode placement) and writes the
-   result into FakeEmgDataSource.base. Every other consumer (muscle bars,
-   EmgAlertEvaluator, Debug Mode's rolling-RMS + calibration) already reads
-   from that same object, so nothing downstream needed to change to
-   support a real data source alongside the simulated one. */
-const ESP_CODE_TO_MV = 1200.0 / 8388608.0; // ADC_VREF(1.2V)=1200mV / 2^23, PGA=1 — must match the .ino's ADC_VREF/ADC_FULLSCALE
-const DEFAULT_ESP_MAX_MV = 0.5;
+   (see ESP32_WIFI_code.ino). The sketch runs its own Wi-Fi AP and pushes
+   samples over a WebSocket at ws://192.168.4.1:81/ (no more HTTP polling).
+   Each binary message is [8-byte header][N × 9-byte samples]:
+     - header: seq (uint32 BE, running index of the first sample in the batch)
+               + t_ms (uint32 BE, brace millis) — lets us detect dropped
+               samples via seq gaps and measure latency via t_ms.
+     - samples: 3 channels × int24 big-endian raw ADC codes from the ADS131M08.
+   On connect the brace also sends one text frame {"type":"hello","fs":N} with
+   its measured sample rate. This module converts codes to mV (VREF=1.2V,
+   2^23 full-scale, PGA=1), runs every sample through the same HP20+Notch60+
+   LP450 chain the sketch's page uses, RMSes over a ~50ms window and scales it
+   onto this app's 0-100 "% activation" using a user-set max-reference (no
+   universal mV->% constant — depends on ADC gain/electrode placement), then
+   writes into FakeEmgDataSource.base. Every other consumer (muscle bars,
+   EmgAlertEvaluator, Debug Mode's calibration) already reads from that same
+   object, so nothing downstream changed. Individual filtered samples also go
+   into EmgWave for Debug Mode's plot. */
+/* 24-bit signed big-endian(MSB 먼저) 3바이트를 32-bit로 부호확장.
+   .ino 의 WebSocket 바이너리 포맷(샘플당 9바이트 = 3ch × int24 BE)과 정확히 대응. */
+function s24be(dv, o){
+  let v = (dv.getUint8(o) << 16) | (dv.getUint8(o+1) << 8) | dv.getUint8(o+2);
+  if(v & 0x800000) v |= 0xFF000000;
+  return v;
+}
 const EspEmgSource = {
-  baseUrl:'http://192.168.4.1',
-  since:0,
-  pollTimer:null,
+  ip:'192.168.4.1',
+  ws:null,
   active:false,
   connected:false,
-  batch:{ch1:[], ch2:[], ch3:[]},
+  chain:null,
+  settle:0,            // samples still to discard while the HP settles
+  acc:null,            // per-channel {n, sumSq} accumulated since the last commit
+  railHits:0, railTotal:0,   // input-saturation tracking, for signal quality
+  rateCount:0, rateT0:0, sampleRate:0,
+  nextSeq:-1, dropped:0,     // seq 기반 유실 감지 (헤더의 seq 연속성)
+  braceFs:EMG_FS,            // hello 로 받은 실측 샘플레이트
+  commitTimer:null,
+  reconnectTimer:null,
   start(ip){
     this.stop();
-    this.baseUrl = 'http://' + String(ip || '192.168.4.1').replace(/^https?:\/\//,'').replace(/\/+$/,'');
-    this.since = 0;
+    // 'ws://', 'http://', 포트, 끝 슬래시를 벗겨 순수 호스트만 남긴다.
+    this.ip = String(ip || '192.168.4.1')
+      .replace(/^wss?:\/\//,'').replace(/^https?:\/\//,'').replace(/\/+$/,'').replace(/:\d+$/,'');
     this.active = true;
-    // Zero out immediately, not just on a later failed/disconnected poll --
-    // otherwise whatever value FakeEmgDataSource.base last held (leftover
-    // simulated demo activity, or a stale real reading from before) would
-    // keep showing as "activity" for the whole window until the first
-    // successful fetch actually lands.
+    // Fresh filter state per connection: biquads carry history, and reusing
+    // a chain across a reconnect would replay the old signal's transient.
+    this.chain = [makeEmgChain(), makeEmgChain(), makeEmgChain()];
+    this.settle = EMG_SETTLE_SAMPLES;
+    this.acc = [{n:0,ss:0},{n:0,ss:0},{n:0,ss:0}];
+    this.railHits = 0; this.railTotal = 0;
+    this.rateCount = 0; this.rateT0 = Date.now(); this.sampleRate = 0;
+    this.nextSeq = -1; this.dropped = 0; this.braceFs = EMG_FS;
+    EmgWave.clear(); DispWave.clear(); CleanWave.clear();
+    // Zero out immediately so leftover simulated/stale activity doesn't linger
+    // until the first WebSocket frame lands.
     this._zeroBase();
-    this._poll();
+    this._connect();
+    // RMS 커밋은 메시지 도착과 분리해 ~50ms 주기로 활성도(%)를 갱신한다.
+    // (기존 HTTP 폴링이 40ms마다 커밋하던 것과 동일한 감각)
+    this.commitTimer = setInterval(() => this._commit(), 50);
   },
   stop(){
     const wasConnected = this.connected;
     this.active = false;
-    clearTimeout(this.pollTimer);
-    this.pollTimer = null;
+    if(this.reconnectTimer){ clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
+    if(this.commitTimer){ clearInterval(this.commitTimer); this.commitTimer = null; }
+    if(this.ws){ try{ this.ws.onclose = null; this.ws.close(); }catch(e){} this.ws = null; }
     this.connected = false;
-    // No live connection to the brace means no real signal to show --
-    // freeze/zero the shared value instead of leaving it at its last
-    // reading, so nothing appears to be "active" while actually disconnected.
+    this.sampleRate = 0;
+    // No live connection means no real signal — zero the shared value so
+    // nothing appears "active" while actually disconnected.
     this._zeroBase();
+    EmgWave.clear(); DispWave.clear(); CleanWave.clear();
     if(wasConnected) onEspConnectionChange(false);
   },
   _zeroBase(){
@@ -1355,42 +1784,89 @@ const EspEmgSource = {
     FakeEmgDataSource.base.ch2 = 0;
     FakeEmgDataSource.base.ch3 = 0;
   },
-  async _poll(){
-    try{
-      const res = await fetch(this.baseUrl + '/samples?since=' + this.since, {cache:'no-store'});
-      if(!res.ok) throw new Error('http ' + res.status);
-      const json = await res.json();
-      this.since = json.idx;
-      (json.d || []).forEach(row => {
-        this.batch.ch1.push(Math.abs(row[0] * ESP_CODE_TO_MV));
-        this.batch.ch2.push(Math.abs(row[1] * ESP_CODE_TO_MV));
-        this.batch.ch3.push(Math.abs(row[2] * ESP_CODE_TO_MV));
-      });
-      this._commit();
-      if(!this.connected){ this.connected = true; onEspConnectionChange(true); }
-    }catch(err){
-      // Expected in the claude.ai artifact preview: the sandbox blocks
-      // requests to external hosts entirely, so this will always fail
-      // there. It's expected to succeed once ported to the Android
-      // WebView app on a phone actually joined to the brace's Wi-Fi.
-      if(this.connected){
-        this.connected = false;
-        this._zeroBase(); // a dropped poll mid-session shouldn't leave the last reading looking "active"
-        onEspConnectionChange(false);
-      }
+  _connect(){
+    if(!this.active) return;
+    let ws;
+    // ws://<ip>:81/  — 브레이스(ESP32)가 여는 WebSocket 스트림 포트.
+    // 앱 WebView는 file:// 출처 + usesCleartextTraffic=true 라 ws:// 평문 연결이 허용된다.
+    try{ ws = new WebSocket('ws://' + this.ip + ':81/'); }
+    catch(e){ this._scheduleReconnect(); return; }
+    ws.binaryType = 'arraybuffer';
+    this.ws = ws;
+    ws.onopen = () => { this.nextSeq = -1; if(!this.connected){ this.connected = true; onEspConnectionChange(true); } };
+    ws.onerror = () => { try{ ws.close(); }catch(e){} };
+    ws.onclose = () => {
+      if(this.connected){ this.connected = false; this._zeroBase(); onEspConnectionChange(false); }
+      this._scheduleReconnect();
+    };
+    ws.onmessage = (ev) => this._onMessage(ev);
+  },
+  _scheduleReconnect(){
+    if(!this.active || this.reconnectTimer) return;
+    this.reconnectTimer = setTimeout(() => { this.reconnectTimer = null; this._connect(); }, 1000);
+  },
+  _onMessage(ev){
+    // 텍스트 프레임 = hello(JSON): 브레이스가 실측 샘플레이트를 통지
+    if(typeof ev.data === 'string'){
+      try{ const j = JSON.parse(ev.data); if(j.fs) this.braceFs = j.fs; }catch(e){}
+      return;
     }
-    if(this.active) this.pollTimer = setTimeout(() => this._poll(), 40);
+    // 바이너리 프레임 = [8B 헤더: seq(uint32 BE) + t_ms(uint32 BE)][N × 9B 샘플]
+    const dv = new DataView(ev.data);
+    const seq = dv.getUint32(0, false);        // t_ms = dv.getUint32(4,false) — 필요 시 지연 측정
+    const n = ((dv.byteLength - 8) / 9) | 0;
+    if(this.nextSeq >= 0 && seq > this.nextSeq) this.dropped += (seq - this.nextSeq);  // seq 점프 = 유실
+    this.nextSeq = seq + n;
+    for(let k=0;k<n;k++){
+      const o = 8 + k*9;
+      const c0 = s24be(dv, o), c1 = s24be(dv, o+3), c2 = s24be(dv, o+6);
+      // Input saturation check on the RAW code (>95% of 24-bit full scale):
+      // a railed input means a bad/disconnected electrode.
+      this.railTotal++;
+      if(Math.abs(c0) > 7969177 || Math.abs(c1) > 7969177 || Math.abs(c2) > 7969177) this.railHits++;
+      const m0 = c0 * ESP_CODE_TO_MV, m1 = c1 * ESP_CODE_TO_MV, m2 = c2 * ESP_CODE_TO_MV;
+      // fixed analysis chain (feeds EmgWave + RMS + calibration + % activation) — unchanged
+      const y0 = this.chain[0](m0), y1 = this.chain[1](m1), y2 = this.chain[2](m2);
+      // toggleable display pipeline (feeds DispWave = Debug plot only). Run every
+      // sample so biquad state stays continuous even while a module is off.
+      const p0 = dispProcess(0, m0), p1 = dispProcess(1, m1), p2 = dispProcess(2, m2);
+      if(this.settle > 0){ this.settle--; continue; }  // drop the HP transient
+      EmgWave.push(y0, y1, y2);
+      DispWave.push(p0, p1, p2);
+      // Clean View (decision-directed Wiener) — only when enabled (FFT cost gated)
+      if(cleanEnabled){
+        const cy0=cleanProc[0].push(y0), cy1=cleanProc[1].push(y1), cy2=cleanProc[2].push(y2);
+        if(cy0!==null) CleanWave.push(cy0, cy1, cy2);
+      }
+      this.acc[0].n++; this.acc[0].ss += y0*y0;
+      this.acc[1].n++; this.acc[1].ss += y1*y1;
+      this.acc[2].n++; this.acc[2].ss += y2*y2;
+    }
+    // Measured throughput, for the SPS readout and to tell a healthy link
+    // from one silently dropping samples.
+    this.rateCount += n;
+    const dt = Date.now() - this.rateT0;
+    if(dt >= 1000){ this.sampleRate = this.rateCount * 1000 / dt; this.rateCount = 0; this.rateT0 = Date.now(); }
   },
   _commit(){
     const maxMv = Math.max(0.001, appState.espMaxMv || DEFAULT_ESP_MAX_MV);
-    ['ch1','ch2','ch3'].forEach(id => {
-      const buf = this.batch[id];
-      if(!buf.length) return;
-      const meanSq = buf.reduce((s,v) => s + v*v, 0) / buf.length;
-      const rmsMv = Math.sqrt(meanSq);
+    ['ch1','ch2','ch3'].forEach((id, ci) => {
+      const a = this.acc[ci];
+      if(!a.n) return;
+      const rmsMv = Math.sqrt(a.ss / a.n);
       FakeEmgDataSource.base[id] = Math.max(0, Math.min(100, rmsMv / maxMv * 100));
-      buf.length = 0;
+      a.n = 0; a.ss = 0;
     });
+  },
+  /* Signal quality as an actual measurement: how much of the expected stream
+     is arriving (vs the brace's reported FS), derated by ADC railing. */
+  quality(){
+    if(!this.connected) return 0;
+    if(!this.sampleRate) return 50;            // first second, not measured yet
+    const expFs = this.braceFs || EMG_FS;
+    const rate = Math.max(0, Math.min(1, this.sampleRate / expFs));
+    const railFrac = this.railTotal ? this.railHits / this.railTotal : 0;
+    return Math.round(100 * rate * (1 - Math.min(1, railFrac)));
   },
 };
 function onEspConnectionChange(connected){
@@ -1419,9 +1895,14 @@ function updateBraceChip(){
 function setEmgSource(mode){
   if(appState.emgSource === mode) return;
   appState.emgSource = mode;
-  document.getElementById('srcSimBtn').classList.toggle('active', mode === 'simulated');
-  document.getElementById('srcRealBtn').classList.toggle('active', mode === 'real');
-  document.getElementById('realSourcePanel').style.display = mode === 'real' ? 'block' : 'none';
+  // Never let one source's waveform linger on the plot after switching to
+  // the other — simulated noise must not be mistaken for a brace reading.
+  EmgWave.clear(); DispWave.clear(); CleanWave.clear();
+  SimEmgWave.reset();
+  // (Simulated/Real toggle removed — buttons may not exist; guard the refs.)
+  document.getElementById('srcSimBtn')?.classList.toggle('active', mode === 'simulated');
+  document.getElementById('srcRealBtn')?.classList.toggle('active', mode === 'real');
+  const rsp = document.getElementById('realSourcePanel'); if(rsp) rsp.style.display = 'block';
   if(mode === 'simulated'){
     EspEmgSource.stop();
     const p = Repository.patients.find(x => x.id === 'p1');
@@ -1446,10 +1927,10 @@ function toggleEspConnection(){
   EspEmgSource.start(ip);
 }
 function syncEmgSourceUI(){
-  const mode = appState.emgSource || 'simulated';
-  document.getElementById('srcSimBtn').classList.toggle('active', mode === 'simulated');
-  document.getElementById('srcRealBtn').classList.toggle('active', mode === 'real');
-  document.getElementById('realSourcePanel').style.display = mode === 'real' ? 'block' : 'none';
+  const mode = appState.emgSource || 'real';
+  document.getElementById('srcSimBtn')?.classList.toggle('active', mode === 'simulated');
+  document.getElementById('srcRealBtn')?.classList.toggle('active', mode === 'real');
+  const rsp = document.getElementById('realSourcePanel'); if(rsp) rsp.style.display = 'block';
   const btn = document.getElementById('espConnectBtn');
   if(btn){
     btn.textContent = EspEmgSource.active ? 'Disconnect' : 'Connect';
@@ -1467,7 +1948,7 @@ const appState = {
   todayAlertCounts:{warning:3, danger:1},
   dailyReportTime:'20:00', dailyReportDeliveredDate:null,
   userName:'',
-  emgSource:'simulated', espMaxMv:DEFAULT_ESP_MAX_MV,
+  emgSource:'real', espMaxMv:DEFAULT_ESP_MAX_MV,
 };
 let currentPatientId = 'p1';
 const evaluator = new EmgAlertEvaluator(Repository.thresholds['p1']);
@@ -1591,9 +2072,13 @@ function renderSingleTrendChart(hostId, values, labels){
     </svg>`;
 }
 
+/* Demo RMS trend. Anchored on the measured recordings: a day's activation
+   sits near the resting level (7-8% of full scale) and rises into the 25-45%
+   band while the patient is up and moving, rather than the previous 20-60%
+   band which implied constant near-threshold muscle activity all day. */
 function buildRmsSeriesPoints(seed){
   const pts = [];
-  for(let i=0;i<8;i++){ pts.push(20 + Math.abs(Math.sin(i*0.9+seed)*40) + (i===5?seed*6:0)); }
+  for(let i=0;i<8;i++){ pts.push(8 + Math.abs(Math.sin(i*0.9+seed)*28) + (i===5?seed*4:0)); }
   return pts;
 }
 let rmsSeriesData = null, rmsAlertMarkers = null;
@@ -1689,7 +2174,9 @@ function renderPatientHome(){
   updateBraceChip();
   updateStatusHero(currentOverallStatus || 'safe');
   const s = Repository.thresholds['p1'];
-  const html = CHANNEL_DEFS.map(c => renderMuscleChannelCard(c.id, FakeEmgDataSource.base[c.id]|0, s.channels[c.id], 90, 'safe', false)).join('');
+  // Real link health when connected to a brace; a labelled demo constant otherwise.
+  const q = isReal ? EspEmgSource.quality() : 90;
+  const html = CHANNEL_DEFS.map(c => renderMuscleChannelCard(c.id, FakeEmgDataSource.base[c.id]|0, s.channels[c.id], q, 'safe', false)).join('');
   document.getElementById('muscleChannels').innerHTML = html;
 }
 let currentOverallStatus = 'safe';
@@ -1705,6 +2192,12 @@ function updateStatusHero(status){
 
 /* live monitoring loop — starts once the patient is signed in and keeps
    running for the session, mirroring a brace that is always connected */
+/* Evaluator tick. Was 400ms, which cannot resolve the alert durations it is
+   asked to enforce: a 150ms Warning Duration is a fifth of one tick, and the
+   real activity bursts in the reference recordings last 0.3-1.3s, so a 400ms
+   sampler misses or double-counts most of them. 100ms matches the RMS window
+   the thresholds were derived on. */
+const MONITOR_TICK_MS = 100;
 let monitoringTimer = null;
 function startLiveMonitoring(){
   if(monitoringTimer) return;
@@ -1718,7 +2211,9 @@ function startLiveMonitoring(){
       // FakeEmgDataSource.base as each Wi-Fi poll batch arrives (as
       // often as ~every 40ms); this tick just reads the current level
       // instead of generating a synthetic random walk.
-      const q = EspEmgSource.connected ? 92 : 0;
+      // Real measured link health rather than a hardcoded 92 (see
+      // EspEmgSource.quality(): delivered sample rate, derated by ADC railing)
+      const q = EspEmgSource.quality();
       sample = {
         ch1: Math.round(FakeEmgDataSource.base.ch1),
         ch2: Math.round(FakeEmgDataSource.base.ch2),
@@ -1726,29 +2221,52 @@ function startLiveMonitoring(){
         quality: {ch1:q, ch2:q, ch3:q},
       };
     } else {
-      const spike = tick % 9 === 0 ? {ch2:true} : (tick % 14 === 0 ? {ch1:true, ch3:true} : null);
+      // spikes retimed for the 100ms tick so the demo still shows an event
+      // every few seconds rather than several per second
+      const spike = tick % 36 === 0 ? {ch2:true} : (tick % 56 === 0 ? {ch1:true, ch3:true} : null);
       sample = FakeEmgDataSource.next(spike);
     }
-    const result = evaluator.evaluate(sample, 400);
+    const result = evaluator.evaluate(sample, MONITOR_TICK_MS);
     const s = Repository.thresholds['p1'];
     const html = CHANNEL_DEFS.map(c => renderMuscleChannelCard(c.id, sample[c.id], s.channels[c.id], sample.quality[c.id], result.perChannel[c.id].status, false)).join('');
     document.getElementById('muscleChannels').innerHTML = html;
     if(result.overall !== currentOverallStatus) updateStatusHero(result.overall);
     if(result.overall !== 'safe' && !alertShownForThisEpisode){
       alertShownForThisEpisode = true;
-      triggerAlert(result.overall, result.cause, evaluator.state);
+      /* Debug Mode is the screen for reading the raw waveform and running
+         calibration; a full-screen alert modal covering it every few seconds
+         makes that impossible. Alerts are still evaluated, counted and
+         logged here — only the blocking modal is held back. */
+      if(appState.screen !== 'debugMode') triggerAlert(result.overall, result.cause, evaluator.state);
+      else recordAlert(result.overall, result.cause, evaluator.state);
     }
     if(result.overall === 'safe') alertShownForThisEpisode = false;
-  }, 400);
+  }, MONITOR_TICK_MS);
 }
 function stopLiveMonitoring(){
   clearInterval(monitoringTimer);
   monitoringTimer = null;
 }
 let alertShownForThisEpisode = false;
-function triggerAlert(severity, cause, chState){
+/* Bookkeeping half of an alert: history entry, today's counters, calendar
+   log. Split out from triggerAlert() so an alert can be recorded without
+   throwing a modal over the screen (see the Debug Mode case above). */
+function recordAlert(severity, cause, chState){
   const worstId = Object.keys(chState).sort((a,b)=>chState[b].warningMs-chState[a].warningMs)[0];
-  const sec = (chState[worstId].warningMs/1000).toFixed(1);
+  const sec = parseFloat((chState[worstId].warningMs/1000).toFixed(1));
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+  Repository.alerts.p1.unshift({time:timeStr, channel:cause, severity, durationSec:sec});
+  if(severity==='warning') appState.todayAlertCounts.warning++; else appState.todayAlertCounts.danger++;
+  document.getElementById('sumWarn').textContent = appState.todayAlertCounts.warning;
+  document.getElementById('sumDanger').textContent = appState.todayAlertCounts.danger;
+  const todayLog = getDayLog('p1', todayKey());
+  todayLog.warnCount = appState.todayAlertCounts.warning;
+  todayLog.dangerCount = appState.todayAlertCounts.danger;
+  return sec;
+}
+function triggerAlert(severity, cause, chState){
+  const sec = recordAlert(severity, cause, chState).toFixed(1);
   const s = Repository.thresholds['p1'];
   document.getElementById('alertBadge').style.background = severity==='danger' ? 'var(--danger-tint)' : 'var(--warning-tint)';
   document.getElementById('alertBadge').textContent = severity==='danger' ? '⛔' : '⚠️';
@@ -1756,16 +2274,6 @@ function triggerAlert(severity, cause, chState){
   document.getElementById('alertMessage').textContent = `${cause} activity has continued for ${sec} seconds.`;
   document.getElementById('alertGuidance').textContent = s.message;
   document.getElementById('alertOverlay').classList.add('show');
-
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
-  Repository.alerts.p1.unshift({time:timeStr, channel:cause, severity, durationSec:parseFloat(sec)});
-  if(severity==='warning') appState.todayAlertCounts.warning++; else appState.todayAlertCounts.danger++;
-  document.getElementById('sumWarn').textContent = appState.todayAlertCounts.warning;
-  document.getElementById('sumDanger').textContent = appState.todayAlertCounts.danger;
-  const todayLog = getDayLog('p1', todayKey());
-  todayLog.warnCount = appState.todayAlertCounts.warning;
-  todayLog.dangerCount = appState.todayAlertCounts.danger;
 
   if('Notification' in window){
     try{
@@ -1798,29 +2306,27 @@ function exitDebugMode(){
   go('patientHome');
 }
 
-/* RawEmg — a small rolling-RMS layer on top of FakeEmgDataSource. The main
-   monitoring loop treats FakeEmgDataSource's per-tick value as an
-   already-smoothed activation level; this instead samples noisy "raw"
-   values every 20ms around that level and computes a true 100ms-window
-   RMS per channel, since the calibration spec explicitly asks for a
-   100ms rolling RMS rather than a single instantaneous reading. */
+/* RawEmg — true 100ms rolling RMS, read straight off the filtered per-sample
+   waveform in EmgWave (real samples from the brace in Real mode, the
+   synthesised stream in Simulated mode) and expressed as % of full scale.
+
+   This used to jitter FakeEmgDataSource's already-smoothed per-tick value by
+   +/-5 and RMS the result, which meant calibration was measuring its own
+   synthetic noise rather than the sensor's. It also collapsed in Real mode:
+   the ticker ran at 20ms while the brace poll only refreshed the shared
+   value every 40ms, so half of every window was duplicated samples and the
+   MAD the calibration depends on came out artificially small. */
 const RawEmg = {
   windowMs: 100,
-  buffers: {ch1:[], ch2:[], ch3:[]},
   tick(){
-    const now = Date.now();
+    const n = Math.min(EmgWave.total, Math.round(EMG_FS*this.windowMs/1000));
+    const fullScale = Math.max(0.001, appState.espMaxMv || DEFAULT_ESP_MAX_MV);
     const rms = {};
-    ['ch1','ch2','ch3'].forEach(id => {
-      const base = FakeEmgDataSource.base[id];
-      // In real mode, base is already a live RMS derived from actual brace
-      // samples (see EspEmgSource) — don't add synthetic jitter on top of a
-      // real signal, only when simulating.
-      const raw = appState.emgSource === 'real' ? base : Math.max(0, Math.min(100, base + (Math.random()*10 - 5)));
-      const buf = this.buffers[id];
-      buf.push({t:now, v:raw});
-      while(buf.length && now - buf[0].t > this.windowMs) buf.shift();
-      const meanSq = buf.reduce((s,pt) => s + pt.v*pt.v, 0) / buf.length;
-      rms[id] = Math.sqrt(meanSq);
+    CHANNEL_DEFS.forEach((c, ci) => {
+      if(n < 2){ rms[c.id] = 0; return; }
+      let ss = 0;
+      for(let i=0;i<n;i++){ const v = EmgWave.at(ci, i, n); ss += v*v; }
+      rms[c.id] = Math.min(100, Math.sqrt(ss/n)/fullScale*100);
     });
     return rms;
   }
@@ -1829,43 +2335,220 @@ let rawEmgTimer = null;
 function startRawEmgTicker(){
   if(rawEmgTimer) return;
   rawEmgTimer = setInterval(() => {
-    const rms = RawEmg.tick();
-    updateDebugLiveValues(rms);
-    if(calibrationState.active) collectCalibrationSample(rms);
+    /* Simulated mode has no real sample stream; synthesise one here so this
+       screen behaves identically with and without hardware attached.
+
+       This deliberately runs on the interval timer rather than inside the
+       requestAnimationFrame draw loop. rAF does not fire at all while the
+       document is hidden, so driving sample generation from it would stall
+       the signal whenever the WebView is backgrounded — and calibration,
+       which samples this stream, would then read a frozen constant and fail
+       with "signal barely changed". Generating data and drawing it are
+       separate concerns; only the drawing belongs on rAF. */
+    if(appState.emgSource !== 'real') SimEmgWave.pump();
+    updateDebugLiveValues();
+    if(calibrationState.active) collectCalibrationSample(RawEmg.tick());
   }, 20);
 }
 function stopRawEmgTicker(){
   clearInterval(rawEmgTimer);
   rawEmgTimer = null;
+  stopWaveforms();
 }
-function updateDebugLiveValues(rms){
+function updateDebugLiveValues(){
   const p = Repository.patients.find(x => x.id === 'p1');
   const chip = document.getElementById('debugConnChip');
   if(chip){
-    chip.className = 'chip ' + (p.connection === 'connected' ? 'connected' : 'disconnected');
-    chip.innerHTML = '<span class="dot"></span>' + (p.connection === 'connected' ? 'Sensor Connected' : 'Sensor Disconnected');
+    const connected = p.connection === 'connected';
+    chip.className = 'chip ' + (connected ? 'connected' : 'disconnected');
+    let label = connected ? 'Sensor Connected' : 'Sensor Disconnected';
+    // In Real mode the measured throughput is the single most useful
+    // diagnostic on this screen: a link that connects but delivers 200 SPS
+    // instead of ~1295 looks identical in the UI otherwise.
+    if(connected && appState.emgSource === 'real' && EspEmgSource.sampleRate){
+      label += ' · ' + Math.round(EspEmgSource.sampleRate) + ' SPS';
+    }
+    chip.innerHTML = '<span class="dot"></span>' + label;
   }
+}
+
+/* ---------------------------------------------------------
+   Debug Mode live waveform
+   ---------------------------------------------------------
+   Replaces the previous numeric readout, which printed two fast-changing
+   decimal numbers per channel — unreadable while actually moving the leg,
+   and impossible to tell a real contraction from an electrode artifact by.
+
+   Window lengths mirror the Sweep control on the brace's own viewer page
+   (WINS in ESP32_WIFI_code.ino). That page opens at 1024pt/0.79s; pressing
+   its "« 느리게" button twice lands on 4096pt/3.16s — the speed this screen
+   defaults to — and a third press gives 8192pt/6.33s. */
+const WAVE_WINDOWS = [512, 1024, 2048, 4096, 8192];
+let waveWinIdx = 3;               // 4096 pt / 3.16 s
+let waveFrozen = false;
+let waveRaf = null;
+const waveCanvas = {};
+
+function stepWaveWindow(dir){     // dir -1 = slower (wider window), +1 = faster
+  waveWinIdx = Math.min(WAVE_WINDOWS.length-1, Math.max(0, waveWinIdx - dir));
+  updateWaveWinInfo();
+}
+function updateWaveWinInfo(){
+  const n = WAVE_WINDOWS[waveWinIdx];
+  const el = document.getElementById('waveWinInfo');
+  if(el) el.textContent = n + ' pt / ' + (n/EMG_FS).toFixed(2) + ' s';
+}
+function toggleWaveFreeze(){
+  waveFrozen = !waveFrozen;
+  const b = document.getElementById('waveFreezeBtn');
+  if(b){
+    b.innerHTML = waveFrozen ? '&#9654; Resume' : '&#9208; Freeze';
+    b.classList.toggle('on', waveFrozen);
+  }
+}
+/* Canvases are laid out in CSS pixels but drawn at device resolution, or the
+   trace is visibly soft on a 3x phone screen.
+
+   Called every frame rather than once at start-up, and cheap when nothing
+   changed. Sizing once was a real bug: the canvases have no layout size
+   until the Debug Mode section is actually visible, so whether the plot ever
+   appeared came down to whether that first call happened to land after
+   layout. It also silently failed to re-scale on rotation. */
+function sizeWaveCanvases(){
+  const dpr = window.devicePixelRatio || 1;
   CHANNEL_DEFS.forEach(c => {
-    const rawEl = document.getElementById('debugRaw_' + c.id);
-    const rmsEl = document.getElementById('debugRms_' + c.id);
-    if(rawEl) rawEl.textContent = FakeEmgDataSource.base[c.id].toFixed(1);
-    if(rmsEl) rmsEl.textContent = rms[c.id].toFixed(1);
+    const el = document.getElementById('wave_' + c.id);
+    if(!el) return;
+    const w = el.clientWidth, h = el.clientHeight;
+    if(!w || !h) return;                       // not laid out yet — retry next frame
+    const cur = waveCanvas[c.id];
+    if(cur && cur.el === el && cur.w === w && cur.h === h && cur.dpr === dpr) return;
+    el.width = Math.round(w*dpr); el.height = Math.round(h*dpr);
+    const ctx = el.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    waveCanvas[c.id] = {el, ctx, w, h, dpr};
   });
 }
+function cssVar(name){
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+function drawWaveforms(){
+  waveRaf = requestAnimationFrame(drawWaveforms);
+  sizeWaveCanvases();
+  if(waveFrozen) return;
+
+  const win = Math.min(WAVE_WINDOWS[waveWinIdx], EMG_WAVE_BUF);
+  // Clean View on → plot the Wiener-denoised CleanWave; else the toggleable DispWave.
+  const SRC = (cleanEnabled && cleanProc[0].hasNoise()) ? CleanWave : DispWave;
+  const have = Math.min(SRC.total, win);
+  const fullScale = Math.max(0.001, appState.espMaxMv || DEFAULT_ESP_MAX_MV);
+  const thr = Repository.thresholds['p1'];
+  const border = cssVar('--border'), text3 = cssVar('--text3');
+
+  CHANNEL_DEFS.forEach((c, ci) => {
+    const o = waveCanvas[c.id];
+    if(!o) return;
+    const {ctx, w, h} = o;
+    ctx.clearRect(0, 0, w, h);
+
+    if(have < 2){
+      ctx.fillStyle = text3; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(appState.emgSource === 'real' ? 'Waiting for brace data…' : 'No signal', w/2, h/2);
+      ctx.textAlign = 'left';
+      return;
+    }
+
+    // Warning threshold, converted from % of full scale back into mV. It is
+    // an RMS-envelope threshold, so it is drawn as a +/- band around zero.
+    const thrMv = thr.channels[c.id].warningOn/100 * fullScale;
+
+    /* Auto-scale symmetrically about zero, with two floors: one so an idle
+       channel isn't amplified into a wall of noise, and one that keeps the
+       threshold band on screen. Without the latter the reference line
+       disappears exactly when the leg is at rest — which is when you most
+       want to see how much headroom is left. */
+    let peak = 0;
+    for(let i=0;i<have;i++){ const v = Math.abs(SRC.at(ci, i, have)); if(v > peak) peak = v; }
+    const span = Math.max(peak*1.15, thrMv*1.15, fullScale*0.06);
+    const yOf = v => h/2 - (v/span)*(h/2);
+
+    ctx.strokeStyle = border; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();   // zero line
+
+    if(thrMv < span){
+      ctx.save();
+      ctx.setLineDash([4,4]); ctx.strokeStyle = cssVar('--warning'); ctx.globalAlpha = 0.75;
+      ctx.beginPath();
+      ctx.moveTo(0, yOf(thrMv)); ctx.lineTo(w, yOf(thrMv));
+      ctx.moveTo(0, yOf(-thrMv)); ctx.lineTo(w, yOf(-thrMv));
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Min/max decimation: one vertical segment per pixel column. At 4096
+    // samples across a ~330px canvas that is ~12 samples/column, so drawing
+    // a plain polyline would alias away exactly the spikes worth seeing.
+    ctx.strokeStyle = c.hex; ctx.lineWidth = 1;
+    ctx.beginPath();
+    const step = have / w;
+    for(let px=0; px<w; px++){
+      const a = Math.floor(px*step), b = Math.min(have, Math.floor((px+1)*step));
+      let mn = Infinity, mx = -Infinity;
+      for(let i=a; i<b; i++){ const v = SRC.at(ci, i, have); if(v<mn) mn=v; if(v>mx) mx=v; }
+      if(mn === Infinity) continue;
+      const x = px + 0.5;
+      ctx.moveTo(x, yOf(mx)); ctx.lineTo(x, yOf(mn === mx ? mn - span*0.002 : mn));
+    }
+    ctx.stroke();
+
+    // mV scale marker
+    ctx.fillStyle = text3; ctx.font = '9px system-ui';
+    ctx.fillText('±' + span.toFixed(1) + ' mV', 4, 11);
+
+    // 250ms RMS badge — long enough to be readable, short enough to track a
+    // contraction, and the same quantity the alert evaluator acts on.
+    const rn = Math.min(have, Math.round(EMG_FS*0.25));
+    let ss = 0;
+    for(let i=have-rn; i<have; i++){ const v = SRC.at(ci, i, have); ss += v*v; }   // badge reflects displayed signal
+    const rmsMv = Math.sqrt(ss/rn);
+    const badge = document.getElementById('debugRms_' + c.id);
+    if(badge) badge.textContent = rmsMv.toFixed(2) + ' mV · ' +
+      Math.round(Math.min(100, rmsMv/fullScale*100)) + '%';
+  });
+}
+function startWaveforms(){
+  sizeWaveCanvases();
+  updateWaveWinInfo();
+  buildWaveFilterButtons();
+  updateCleanViewUI();
+  if(appState.emgSource !== 'real'){ SimEmgWave.reset(); }
+  if(!waveRaf) waveRaf = requestAnimationFrame(drawWaveforms);
+}
+function stopWaveforms(){
+  if(waveRaf) cancelAnimationFrame(waveRaf);
+  waveRaf = null;
+}
+
 function renderDebugMode(){
   syncEmgSourceUI();
   document.getElementById('debugLiveValues').innerHTML = CHANNEL_DEFS.map(c => `
-    <div class="card sm">
-      <div class="row between"><span style="font-size:13px; font-weight:700;">${c.short} · ${c.name}</span><span class="tabular" id="debugRaw_${c.id}" style="font-weight:800;">—</span></div>
-      <div class="row between" style="margin-top:6px;"><span style="font-size:11.5px; color:var(--text2);">Rolling RMS (100ms)</span><span class="tabular" id="debugRms_${c.id}">—</span></div>
+    <div class="card sm" style="padding:10px 12px;">
+      <div class="row between" style="margin-bottom:6px;">
+        <span style="font-size:12.5px; font-weight:800; color:var(--navy);">${c.short} · ${c.name}</span>
+        <span class="tabular" id="debugRms_${c.id}" style="font-size:11px; color:var(--text2); font-weight:700;">—</span>
+      </div>
+      <canvas class="emgwave" id="wave_${c.id}"></canvas>
     </div>`).join('');
   renderDebugThresholds();
   document.getElementById('calibrationIdlePanel').style.display = 'block';
   document.getElementById('calibrationActivePanel').style.display = 'none';
   document.getElementById('calibrationResultPanel').style.display = 'none';
   document.getElementById('calibrationResultPanel').innerHTML = '';
+  // Canvases have no layout size until the screen is actually visible.
+  requestAnimationFrame(startWaveforms);
   startRawEmgTicker();
 }
+addEventListener('resize', () => { if(appState.screen === 'debugMode') sizeWaveCanvases(); });
 function renderDebugThresholds(){
   const cal = Repository.calibration.p1;
   const redoBtn = document.getElementById('redoCalibrationBtn');
@@ -1884,11 +2567,25 @@ function renderDebugThresholds(){
     `<div style="font-size:10.5px; color:var(--text3); margin-top:8px;">Calibrated ${new Date(cal.calibratedAt).toLocaleString('en-US',{month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})} · C=Caution, W=Warning, R=Release</div>`;
 }
 
-/* ---- calibration wizard: 20s hold-still, collect rolling-RMS samples,
+/* ---- calibration wizard: hold-still, collect rolling-RMS samples,
    then median + 5*MAD robust thresholding (outlier-resistant, so noisy
    samples during the hold don't skew the baseline the way mean+stdev would) */
-const CALIBRATION_DURATION_S = 20;
-const MIN_CALIBRATION_SAMPLES = 100; // ~20s at a 20ms tick, with slack for timer drift
+/* 20s -> 10s, from measuring how the derived threshold actually behaves on the
+   six at-rest recordings in raw_signals_01 (sitting/stand, 3 channels each):
+
+   - Against the full-length estimate, the error falls steeply up to ~8s
+     (2s: 26% median, 5s: 14%, 8s: 4.3%) and is essentially flat after that.
+   - But comparing two DISJOINT windows of the same length shows no downward
+     trend at all (1s: 26%, 3s: 43%, 5s: 33%). The residual error is baseline
+     drift, not sample count — so extra seconds do not average it away.
+   - Between recordings of the same posture the threshold moves 37-56% anyway.
+
+   So precision beyond ~10-15% is not meaningful here, and 10s already provides
+   ~100 independent 100ms envelope windows, which is what the median/MAD/p95
+   estimate needs. It also comfortably covers the 5s Clean View noise profile.
+   Raise this constant if a future dataset shows a more stable baseline. */
+const CALIBRATION_DURATION_S = 10;
+const MIN_CALIBRATION_SAMPLES = 100; // ~2s at a 20ms tick — floor for timer drift/early abort
 let calibrationState = { active:false, samples:{ch1:[], ch2:[], ch3:[]}, remaining:CALIBRATION_DURATION_S, timerId:null };
 function startCalibration(){
   calibrationState = { active:true, samples:{ch1:[], ch2:[], ch3:[]}, remaining:CALIBRATION_DURATION_S, timerId:null };
@@ -1910,8 +2607,27 @@ function collectCalibrationSample(rms){
   ['ch1','ch2','ch3'].forEach(id => calibrationState.samples[id].push(rms[id]));
 }
 /* Pure function (no DOM) so it's directly unit-testable: returns
-   {ok:true, median, mad, cautionThreshold, warningThreshold, releaseThreshold}
-   or {ok:false, reason}. */
+   {ok:true, median, mad, p95, cautionThreshold, warningThreshold, releaseThreshold}
+   or {ok:false, reason}.
+
+   Threshold rule, re-derived against the raw_signals rest recordings:
+
+   The original rule was median + 5*MAD, which does not survive contact with
+   real data. A resting EMG envelope is tightly clustered but heavy-tailed —
+   measured median 7.2-8.2% with MAD only 0.24-0.42%, yet p99 reaches
+   14.3-16.0%. Five MADs above the median therefore lands at 8.4-10.3%, well
+   inside the resting distribution: replaying the rest recordings through it
+   puts 7.5-8.2% of all resting windows above the "caution" line, i.e. a
+   patient sitting perfectly still trips it several times a minute.
+
+   Anchoring on a high percentile instead tracks the tail that actually
+   causes false alarms, while the median+14*MAD term keeps a floor for the
+   case where the baseline is so quiet that p95 is near zero. The 3.0
+   multiplier is chosen so that a patient whose baseline matches these
+   reference recordings calibrates to roughly the Balanced preset
+   (caution ~29-34% vs the preset's 28%), and shifts proportionally for a
+   noisier or quieter one. Verified: 100% of resting windows stay below
+   caution, while toe-pull and walking cross it as expected. */
 function evaluateCalibrationSamples(samples){
   if(!samples || samples.length < MIN_CALIBRATION_SAMPLES) return {ok:false, reason:'insufficient_data'};
   if(samples.some(v => typeof v !== 'number' || Number.isNaN(v))) return {ok:false, reason:'nan'};
@@ -1919,13 +2635,19 @@ function evaluateCalibrationSamples(samples){
   if(saturatedFrac > 0.3) return {ok:false, reason:'saturated'};
   const sorted = [...samples].sort((a,b) => a-b);
   const median = sorted[Math.floor(sorted.length/2)];
+  const p95 = sorted[Math.min(sorted.length-1, Math.floor(sorted.length*0.95))];
   const absDevs = samples.map(v => Math.abs(v - median)).sort((a,b) => a-b);
   const mad = absDevs[Math.floor(absDevs.length/2)];
-  if(mad < 0.3) return {ok:false, reason:'low_variance'};
-  const cautionThreshold = median + 5.0*mad;
-  const warningThreshold = cautionThreshold * 1.5;
+  /* Flatline guard. The old absolute floor (mad < 0.3) was set without
+     reference to real data and rejects a healthy sensor: measured resting
+     MAD on this hardware is 0.24-0.42%, so ch3 would fail calibration every
+     single time. What actually needs catching is a dead/disconnected input
+     that reports a constant, so test the spread *relative* to the level. */
+  if(median <= 0 || mad < median*0.005) return {ok:false, reason:'low_variance'};
+  const cautionThreshold = Math.max(p95*3.0, median + 14*mad);
+  const warningThreshold = cautionThreshold * 1.8;
   const releaseThreshold = cautionThreshold * 0.7;
-  return {ok:true, median, mad, cautionThreshold, warningThreshold, releaseThreshold};
+  return {ok:true, median, mad, p95, cautionThreshold, warningThreshold, releaseThreshold};
 }
 const CALIBRATION_FAILURE_MESSAGES = {
   disconnected: 'The sensor disconnected during calibration.',
@@ -1954,6 +2676,9 @@ function finishCalibration(forcedResult){
   } else {
     Repository.calibration.p1 = {ch1:resultsByChannel.ch1, ch2:resultsByChannel.ch2, ch3:resultsByChannel.ch3, calibratedAt:Date.now()};
     applyCalibrationToThresholds('p1');
+    // The same 20s at-rest, on-skin window is also the correct place to learn
+    // the Clean View noise profile (see captureCleanNoiseFromCalibration).
+    captureCleanNoiseFromCalibration();
     document.getElementById('calibrationResultPanel').innerHTML = calibrationSuccessHtml(resultsByChannel);
     renderDebugThresholds();
   }
@@ -2004,9 +2729,13 @@ function applyCalibrationToThresholds(patientId){
       enabled: prevEnabled,
     };
   });
-  s.warningDurationMs = 200;
-  s.dangerDurationMs = 300;
-  s.releaseDurationMs = 500;
+  /* Durations kept in step with the recalibrated presets. The old values
+     (200/300/500) had danger firing after only 300ms — shorter than a single
+     stride's calf burst in the walking recordings — while the release edge
+     took longer to clear than the alert took to raise. */
+  s.warningDurationMs = 250;
+  s.dangerDurationMs = 500;
+  s.releaseDurationMs = 350;
 }
 
 /* =========================================================
@@ -2308,7 +3037,9 @@ function renderDetailChannels(){
   const s = Repository.thresholds[currentPatientId];
   const html = CHANNEL_DEFS.map((c,i) => {
     const ch = s.channels[c.id];
-    const val = Math.min(20 + i*22 + (currentPatientId==='p3' ? 30 : 0), 100);
+    /* Demo levels on the measured scale: resting is ~7-8%, light activity
+       ~15-25%, and p3 (the post-op patient) is shown mid-episode. */
+    const val = Math.min(9 + i*11 + (currentPatientId==='p3' ? 26 : 0), 100);
     const status = val >= ch.dangerOn ? 'danger' : val >= ch.warningOn ? 'warning' : 'safe';
     return renderMuscleChannelCard(c.id, val, ch, 88+i, status, true, 0.3+i*0.4);
   }).join('');
@@ -2376,9 +3107,14 @@ function generateReportCsv(patientId){
     const log = peekDayLog(patientId, key);
     const seed = pIdx*53.7 + i*7.91;
     const wearHrs = (4 + seededRand(seed)*4).toFixed(1);
-    const emg1 = Math.round(18 + seededRand(seed+1)*25);
-    const emg2 = Math.round(22 + seededRand(seed+2)*28);
-    const emg3 = Math.round(15 + seededRand(seed+3)*25);
+    /* Day-average activation per channel. A full day is mostly rest, so the
+       average sits close to the measured resting level (7.3/8.2/7.2% of the
+       10mV full scale) with a movement-driven excursion on top. The previous
+       ranges (18-43 / 22-50 / 15-40) described a leg contracting near the
+       warning threshold all day every day. */
+    const emg1 = Math.round(7 + seededRand(seed+1)*11);
+    const emg2 = Math.round(8 + seededRand(seed+2)*12);
+    const emg3 = Math.round(7 + seededRand(seed+3)*14);
     dataRows.push([key, wearHrs, log.warnCount, log.dangerCount, emg1, emg2, emg3].join(','));
   }
   return info.concat([header]).concat(dataRows).join('\r\n');
@@ -2610,7 +3346,13 @@ function renderPresetCards(current){
 function pickPreset(id){
   selectedPreset = id;
   const preset = ALERT_SENSITIVITY_PRESETS.find(p => p.id === id);
-  CHANNEL_DEFS.forEach(c => { pendingChannels[c.id].warningOn = preset.warning; pendingChannels[c.id].dangerOn = preset.danger; });
+  // Per-channel presets: each channel gets its own pair (see ALERT_SENSITIVITY_PRESETS).
+  CHANNEL_DEFS.forEach(c => {
+    const pair = preset.ch[c.id];
+    if(!pair) return;
+    pendingChannels[c.id].warningOn = pair[0];
+    pendingChannels[c.id].dangerOn = pair[1];
+  });
   pendingDurations = {warningDurationMs:preset.warningDurationMs, dangerDurationMs:preset.dangerDurationMs, releaseDurationMs:preset.releaseDurationMs};
   renderPresetCards(id);
   renderChannelThresholdsSection();
@@ -2641,9 +3383,9 @@ function renderChannelThresholdRow(c, ch){
   <div class="card sm">
     <div style="font-size:13px; font-weight:700;">${c.short} · ${c.name}</div>
     <div class="row between" style="margin-top:10px;"><span style="font-size:12px; color:var(--text2); font-weight:700;">Warning Threshold</span><span class="settings-value" data-ch="${c.id}" data-kind="warning">${ch.warningOn}%</span></div>
-    <div class="slider-wrap"><input type="range" min="10" max="95" step="1" value="${ch.warningOn}" data-ch="${c.id}" data-kind="warning" oninput="onChannelThreshSlider(this)" /></div>
+    <div class="slider-wrap"><input type="range" min="5" max="95" step="1" value="${ch.warningOn}" data-ch="${c.id}" data-kind="warning" oninput="onChannelThreshSlider(this)" /></div>
     <div class="row between" style="margin-top:4px;"><span style="font-size:12px; color:var(--text2); font-weight:700;">Danger Threshold</span><span class="settings-value" data-ch="${c.id}" data-kind="danger">${ch.dangerOn}%</span></div>
-    <div class="slider-wrap"><input type="range" min="10" max="99" step="1" value="${ch.dangerOn}" data-ch="${c.id}" data-kind="danger" oninput="onChannelThreshSlider(this)" /></div>
+    <div class="slider-wrap"><input type="range" min="6" max="99" step="1" value="${ch.dangerOn}" data-ch="${c.id}" data-kind="danger" oninput="onChannelThreshSlider(this)" /></div>
   </div>`;
 }
 function renderChannelThresholdsSection(){
